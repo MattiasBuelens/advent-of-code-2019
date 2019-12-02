@@ -35,3 +35,23 @@ fn get_fuel_part2(mut mass: u32) -> u32 {
     }
     total_fuel
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_part1() {
+        assert_eq!(get_fuel_part1(12), 2);
+        assert_eq!(get_fuel_part1(14), 2);
+        assert_eq!(get_fuel_part1(1969), 654);
+        assert_eq!(get_fuel_part1(100756), 33583);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(get_fuel_part2(14), 2);
+        assert_eq!(get_fuel_part2(1969), 966);
+        assert_eq!(get_fuel_part2(100756), 50346);
+    }
+}
