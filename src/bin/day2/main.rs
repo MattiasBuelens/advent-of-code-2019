@@ -1,6 +1,7 @@
 fn main() {
     let input = parse_input();
     part1(&input);
+    part2(&input);
 }
 
 fn parse_input() -> Vec<i32> {
@@ -46,4 +47,25 @@ fn run(program: &mut Vec<i32>) {
         // advance to next opcode
         i += 4;
     }
+}
+
+fn part2(input: &Vec<i32>) {
+    let (noun, verb) = solve_for(input, 19690720);
+    let answer = (noun * 100) + verb;
+    println!("Answer to part 2: {}", answer);
+}
+
+fn solve_for(input: &Vec<i32>, target: i32) -> (i32, i32) {
+    for noun in 0..=99 {
+        for verb in 0..=99 {
+            let mut program = input.clone();
+            program[1] = noun;
+            program[2] = verb;
+            run(&mut program);
+            if program[0] == target {
+                return (noun, verb);
+            }
+        }
+    }
+    panic!("no solution found");
 }
