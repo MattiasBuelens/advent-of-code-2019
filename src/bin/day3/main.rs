@@ -12,8 +12,8 @@ fn main() {
     let trace2 = paths[1].trace();
     let crossings = find_crossings(&trace1, &trace2);
 
-    part1(&crossings);
-    part2(&trace1, &trace2, &crossings);
+    println!("Answer to part 1: {}", part1(&crossings));
+    println!("Answer to part 2: {}", part2(&trace1, &trace2, &crossings));
 }
 
 fn parse_input() -> Vec<Path> {
@@ -24,18 +24,17 @@ fn parse_input() -> Vec<Path> {
         .collect();
 }
 
-fn part1(crossings: &Vec<Position>) {
+fn part1(crossings: &Vec<Position>) -> i32 {
     let min_crossing = crossings
         .iter()
         .min_by(|x, y| x.compare_by_manhattan_distance(y))
         .cloned()
         .expect("expected at least one crossing");
 
-    let answer = min_crossing.manhattan_distance();
-    println!("Answer to part 1: {}", answer);
+    min_crossing.manhattan_distance()
 }
 
-fn part2(trace1: &Vec<Position>, trace2: &Vec<Position>, crossings: &Vec<Position>) {
+fn part2(trace1: &Vec<Position>, trace2: &Vec<Position>, crossings: &Vec<Position>) -> usize {
     let min_crossing = crossings
         .iter()
         .min_by(|left, right| {
@@ -45,8 +44,7 @@ fn part2(trace1: &Vec<Position>, trace2: &Vec<Position>, crossings: &Vec<Positio
         .cloned()
         .expect("expected at least one crossing");
 
-    let answer = total_steps_to_reach(&min_crossing, &trace1, &trace2);
-    println!("Answer to part 2: {}", answer);
+    total_steps_to_reach(&min_crossing, &trace1, &trace2)
 }
 
 fn find_crossings(trace1: &Vec<Position>, trace2: &Vec<Position>) -> Vec<Position> {
@@ -159,5 +157,62 @@ impl Path {
             }
         }
         trace
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn run_part1(path1: &str, path2: &str) -> i32 {
+        let trace1 = path1.parse::<Path>().unwrap().trace();
+        let trace2 = path2.parse::<Path>().unwrap().trace();
+        let crossings = find_crossings(&trace1, &trace2);
+        part1(&crossings)
+    }
+
+    fn run_part2(path1: &str, path2: &str) -> usize {
+        let trace1 = path1.parse::<Path>().unwrap().trace();
+        let trace2 = path2.parse::<Path>().unwrap().trace();
+        let crossings = find_crossings(&trace1, &trace2);
+        part2(&trace1, &trace2, &crossings)
+    }
+
+    #[test]
+    fn test_part1() {
+        assert_eq!(run_part1("R8,U5,L5,D3", "U7,R6,D4,L4",), 6);
+        assert_eq!(
+            run_part1(
+                "R75,D30,R83,U83,L12,D49,R71,U7,L72",
+                "U62,R66,U55,R34,D71,R55,D58,R83",
+            ),
+            159
+        );
+        assert_eq!(
+            run_part1(
+                "R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51",
+                "U98,R91,D20,R16,D67,R40,U7,R15,U6,R7",
+            ),
+            135
+        );
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(run_part2("R8,U5,L5,D3", "U7,R6,D4,L4",), 30);
+        assert_eq!(
+            run_part2(
+                "R75,D30,R83,U83,L12,D49,R71,U7,L72",
+                "U62,R66,U55,R34,D71,R55,D58,R83",
+            ),
+            610
+        );
+        assert_eq!(
+            run_part2(
+                "R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51",
+                "U98,R91,D20,R16,D67,R40,U7,R15,U6,R7",
+            ),
+            410
+        );
     }
 }
