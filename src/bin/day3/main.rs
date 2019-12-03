@@ -2,7 +2,6 @@ use std::cmp::Ordering;
 use std::collections::hash_map::RandomState;
 use std::collections::HashSet;
 use std::iter::FromIterator;
-use std::rc::Rc;
 use std::str::FromStr;
 
 fn main() {
@@ -37,8 +36,6 @@ fn part1(crossings: &Vec<Position>) {
 }
 
 fn part2(trace1: &Vec<Position>, trace2: &Vec<Position>, crossings: &Vec<Position>) {
-    let trace1 = Rc::new(trace1);
-    let trace2 = Rc::new(trace2);
     let min_crossing = crossings
         .iter()
         .min_by(|left, right| {
@@ -59,9 +56,11 @@ fn find_crossings(trace1: &Vec<Position>, trace2: &Vec<Position>) -> Vec<Positio
 }
 
 fn total_steps_to_reach(pos: &Position, trace1: &Vec<Position>, trace2: &Vec<Position>) -> usize {
-    let index1 = trace1.iter().position(|x| x == pos).unwrap() + 1;
-    let index2 = trace2.iter().position(|x| x == pos).unwrap() + 1;
-    index1 + index2
+    steps_to_reach(pos, trace1) + steps_to_reach(pos, trace2)
+}
+
+fn steps_to_reach(pos: &Position, trace: &Vec<Position>) -> usize {
+    trace.iter().position(|x| x == pos).unwrap() + 1
 }
 
 #[derive(Debug, Eq, PartialEq, Hash, Copy, Clone)]
