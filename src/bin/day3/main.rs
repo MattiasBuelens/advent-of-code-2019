@@ -123,8 +123,8 @@ impl FromStr for Move {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let direction = Direction::from_str(&s[0..1]).expect("invalid direction");
-        let steps = i32::from_str(&s[1..]).expect("invalid steps");
+        let direction = s[0..1].parse::<Direction>().expect("invalid direction");
+        let steps = s[1..].parse::<i32>().expect("invalid steps");
         Ok(Move { direction, steps })
     }
 }
@@ -180,7 +180,7 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(run_part1("R8,U5,L5,D3", "U7,R6,D4,L4",), 6);
+        assert_eq!(run_part1("R8,U5,L5,D3", "U7,R6,D4,L4"), 6);
         assert_eq!(
             run_part1(
                 "R75,D30,R83,U83,L12,D49,R71,U7,L72",
@@ -199,7 +199,7 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(run_part2("R8,U5,L5,D3", "U7,R6,D4,L4",), 30);
+        assert_eq!(run_part2("R8,U5,L5,D3", "U7,R6,D4,L4"), 30);
         assert_eq!(
             run_part2(
                 "R75,D30,R83,U83,L12,D49,R71,U7,L72",
