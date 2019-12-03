@@ -6,11 +6,15 @@ use std::rc::Rc;
 use std::str::FromStr;
 
 fn main() {
-    let input = parse_input();
-    assert_eq!(input.len(), 2);
+    let paths = parse_input();
+    assert_eq!(paths.len(), 2);
 
-    part1(&input);
-    part2(&input);
+    let trace1 = paths[0].trace();
+    let trace2 = paths[1].trace();
+    let crossings = find_crossings(&trace1, &trace2);
+
+    part1(&crossings);
+    part2(&trace1, &trace2, &crossings);
 }
 
 fn parse_input() -> Vec<Path> {
@@ -21,35 +25,22 @@ fn parse_input() -> Vec<Path> {
         .collect();
 }
 
-fn part1(paths: &Vec<Path>) {
-    let min_crossing =
-        find_closest_crossing(&paths[0], &paths[1]).expect("expected at least one crossing");
+fn part1(crossings: &Vec<Position>) {
+    let min_crossing = crossings
+        .iter()
+        .min_by(|x, y| x.compare_by_manhattan_distance(y))
+        .cloned()
+        .expect("expected at least one crossing");
 
     let answer = min_crossing.manhattan_distance();
     println!("Answer to part 1: {}", answer);
 }
 
-fn find_closest_crossing(path1: &Path, path2: &Path) -> Option<Position> {
-    let trace1: HashSet<Position, RandomState> = HashSet::from_iter(path1.trace());
-    let trace2: HashSet<Position, RandomState> = HashSet::from_iter(path2.trace());
-
-    let crossings = trace1.intersection(&trace2);
-    crossings
-        .min_by(|x, y| x.compare_by_manhattan_distance(y))
-        .cloned()
-}
-
-fn part2(paths: &Vec<Path>) {
-    let trace1 = paths[0].trace();
-    let trace2 = paths[1].trace();
-
-    let trace1_set: HashSet<Position, RandomState> = HashSet::from_iter(trace1.iter().cloned());
-    let trace2_set: HashSet<Position, RandomState> = HashSet::from_iter(trace2.iter().cloned());
-    let crossings = trace1_set.intersection(&trace2_set);
-
+fn part2(trace1: &Vec<Position>, trace2: &Vec<Position>, crossings: &Vec<Position>) {
     let trace1 = Rc::new(trace1);
     let trace2 = Rc::new(trace2);
     let min_crossing = crossings
+        .iter()
         .min_by(|left, right| {
             total_steps_to_reach(left, &trace1, &trace2)
                 .cmp(&total_steps_to_reach(right, &trace1, &trace2))
@@ -59,6 +50,12 @@ fn part2(paths: &Vec<Path>) {
 
     let answer = total_steps_to_reach(&min_crossing, &trace1, &trace2);
     println!("Answer to part 2: {}", answer);
+}
+
+fn find_crossings(trace1: &Vec<Position>, trace2: &Vec<Position>) -> Vec<Position> {
+    let trace1_set: HashSet<Position, RandomState> = HashSet::from_iter(trace1.iter().cloned());
+    let trace2_set: HashSet<Position, RandomState> = HashSet::from_iter(trace2.iter().cloned());
+    (&trace1_set).intersection(&trace2_set).cloned().collect()
 }
 
 fn total_steps_to_reach(pos: &Position, trace1: &Vec<Position>, trace2: &Vec<Position>) -> usize {
