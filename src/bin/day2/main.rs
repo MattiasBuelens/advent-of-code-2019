@@ -1,7 +1,7 @@
 fn main() {
     let input = parse_input();
-    part1(&input);
-    part2(&input);
+    println!("Answer to part 1: {}", part1(&input));
+    println!("Answer to part 2: {}", part2(&input));
 }
 
 fn parse_input() -> Vec<i32> {
@@ -12,12 +12,12 @@ fn parse_input() -> Vec<i32> {
         .collect();
 }
 
-fn part1(input: &Vec<i32>) {
+fn part1(input: &Vec<i32>) -> i32 {
     let mut program = input.clone();
     program[1] = 12;
     program[2] = 2;
     run(&mut program);
-    println!("Answer to part 1: {}", program[0]);
+    program[0]
 }
 
 fn run(program: &mut Vec<i32>) {
@@ -49,10 +49,9 @@ fn run(program: &mut Vec<i32>) {
     }
 }
 
-fn part2(input: &Vec<i32>) {
+fn part2(input: &Vec<i32>) -> i32 {
     let (noun, verb) = solve_for(input, 19690720);
-    let answer = (noun * 100) + verb;
-    println!("Answer to part 2: {}", answer);
+    (noun * 100) + verb
 }
 
 fn solve_for(input: &Vec<i32>, target: i32) -> (i32, i32) {
