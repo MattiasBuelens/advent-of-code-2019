@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 use std::collections::hash_map::RandomState;
 use std::collections::HashSet;
 use std::iter::FromIterator;
+use std::rc::Rc;
 use std::str::FromStr;
 
 fn main() {
@@ -9,6 +10,7 @@ fn main() {
     assert_eq!(input.len(), 2);
 
     part1(&input);
+    part2(&input);
 }
 
 fn parse_input() -> Vec<Path> {
@@ -35,6 +37,34 @@ fn find_closest_crossing(path1: &Path, path2: &Path) -> Option<Position> {
     crossings
         .min_by(|x, y| x.compare_by_manhattan_distance(y))
         .cloned()
+}
+
+fn part2(paths: &Vec<Path>) {
+    let trace1 = paths[0].trace();
+    let trace2 = paths[1].trace();
+
+    let trace1_set: HashSet<Position, RandomState> = HashSet::from_iter(trace1.iter().cloned());
+    let trace2_set: HashSet<Position, RandomState> = HashSet::from_iter(trace2.iter().cloned());
+    let crossings = trace1_set.intersection(&trace2_set);
+
+    let trace1 = Rc::new(trace1);
+    let trace2 = Rc::new(trace2);
+    let min_crossing = crossings
+        .min_by(|left, right| {
+            total_steps_to_reach(left, &trace1, &trace2)
+                .cmp(&total_steps_to_reach(right, &trace1, &trace2))
+        })
+        .cloned()
+        .expect("expected at least one crossing");
+
+    let answer = total_steps_to_reach(&min_crossing, &trace1, &trace2);
+    println!("Answer to part 2: {}", answer);
+}
+
+fn total_steps_to_reach(pos: &Position, trace1: &Vec<Position>, trace2: &Vec<Position>) -> usize {
+    let index1 = trace1.iter().position(|x| x == pos).unwrap() + 1;
+    let index2 = trace2.iter().position(|x| x == pos).unwrap() + 1;
+    index1 + index2
 }
 
 #[derive(Debug, Eq, PartialEq, Hash, Copy, Clone)]
