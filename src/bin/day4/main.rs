@@ -7,22 +7,16 @@ fn main() {
     println!("Answer to part 2: {}", part2(start, end));
 }
 
-fn part1(start: u32, end: u32) -> i32 {
+fn part1(start: u32, end: u32) -> usize {
     solve(start, end, is_password_part1)
 }
 
-fn part2(start: u32, end: u32) -> i32 {
+fn part2(start: u32, end: u32) -> usize {
     solve(start, end, is_password_part2)
 }
 
-fn solve<F: Fn([u8; 6]) -> bool>(start: u32, end: u32, is_password: F) -> i32 {
-    let mut total_passwords = 0;
-    for pass in start..=end {
-        if is_password(get_digits(pass)) {
-            total_passwords += 1
-        }
-    }
-    total_passwords
+fn solve<F: Fn(&[u8; 6]) -> bool>(start: u32, end: u32, is_password: F) -> usize {
+    (start..=end).map(get_digits).filter(is_password).count()
 }
 
 fn get_digits(mut number: u32) -> [u8; 6] {
@@ -34,7 +28,7 @@ fn get_digits(mut number: u32) -> [u8; 6] {
     digits
 }
 
-fn is_password_part1(digits: [u8; 6]) -> bool {
+fn is_password_part1(digits: &[u8; 6]) -> bool {
     let mut has_same = false;
     for i in 1..digits.len() {
         match digits[i - 1].cmp(&digits[i]) {
@@ -52,7 +46,7 @@ fn is_password_part1(digits: [u8; 6]) -> bool {
     has_same
 }
 
-fn is_password_part2(digits: [u8; 6]) -> bool {
+fn is_password_part2(digits: &[u8; 6]) -> bool {
     let mut has_group_of_2_digits = false;
     let mut current_group_count: u8 = 1;
     for i in 1..digits.len() {
@@ -81,15 +75,15 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(is_password_part1(get_digits(111111)), true);
-        assert_eq!(is_password_part1(get_digits(223450)), false);
-        assert_eq!(is_password_part1(get_digits(123789)), false);
+        assert_eq!(is_password_part1(&get_digits(111111)), true);
+        assert_eq!(is_password_part1(&get_digits(223450)), false);
+        assert_eq!(is_password_part1(&get_digits(123789)), false);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(is_password_part2(get_digits(112233)), true);
-        assert_eq!(is_password_part2(get_digits(123444)), false);
-        assert_eq!(is_password_part2(get_digits(111122)), true);
+        assert_eq!(is_password_part2(&get_digits(112233)), true);
+        assert_eq!(is_password_part2(&get_digits(123444)), false);
+        assert_eq!(is_password_part2(&get_digits(111122)), true);
     }
 }
