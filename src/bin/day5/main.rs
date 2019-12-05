@@ -1,6 +1,7 @@
 fn main() {
     let input = parse_input();
     println!("Answer to part 1: {}", part1(&input));
+    println!("Answer to part 2: {}", part2(&input));
 }
 
 fn parse_input() -> Vec<i32> {
@@ -30,6 +31,21 @@ fn part1(input: &Vec<i32>) -> i32 {
 
     // Finally, the program will output a diagnostic code and immediately halt.
     let answer = last_output.expect("expected at least one output");
+    answer
+}
+
+fn part2(input: &Vec<i32>) -> i32 {
+    let mut program = input.clone();
+
+    // This time, when the TEST diagnostic program runs its input instruction to get the ID
+    // of the system to test, provide it 5, the ID for the ship's thermal radiator controller.
+    let input = vec![5];
+    let output = run(&mut program, &input);
+
+    // This diagnostic test suite only outputs one number, the diagnostic code.
+    assert_eq!(output.len(), 1);
+    let answer = output[0];
+
     answer
 }
 
@@ -79,6 +95,58 @@ fn run(program: &mut Vec<i32>, input: &Vec<i32>) -> Vec<i32> {
                 let o_value = if o_imm { o as i32 } else { program[o as usize] };
                 output.push(o_value);
                 pc += 2;
+            }
+            5 => {
+                // jump if true
+                let c = program[pc + 1];
+                let j = program[pc + 2];
+                let c_imm = (instr / 100) % 10 == 1;
+                let j_imm = (instr / 1000) % 10 == 1;
+                let c_value = if c_imm { c as i32 } else { program[c as usize] };
+                let j_value = if j_imm { j } else { program[j as usize] };
+                pc = if c_value != 0 {
+                    j_value as usize
+                } else {
+                    pc + 3
+                };
+            }
+            6 => {
+                // jump if false
+                let c = program[pc + 1];
+                let j = program[pc + 2];
+                let c_imm = (instr / 100) % 10 == 1;
+                let j_imm = (instr / 1000) % 10 == 1;
+                let c_value = if c_imm { c as i32 } else { program[c as usize] };
+                let j_value = if j_imm { j } else { program[j as usize] };
+                pc = if c_value == 0 {
+                    j_value as usize
+                } else {
+                    pc + 3
+                };
+            }
+            7 => {
+                // less than
+                let l = program[pc + 1];
+                let r = program[pc + 2];
+                let res = program[pc + 3];
+                let l_imm = (instr / 100) % 10 == 1;
+                let r_imm = (instr / 1000) % 10 == 1;
+                let l_value = if l_imm { l as i32 } else { program[l as usize] };
+                let r_value = if r_imm { r as i32 } else { program[r as usize] };
+                program[res as usize] = if l_value < r_value { 1 } else { 0 };
+                pc += 4;
+            }
+            8 => {
+                // equals
+                let l = program[pc + 1];
+                let r = program[pc + 2];
+                let res = program[pc + 3];
+                let l_imm = (instr / 100) % 10 == 1;
+                let r_imm = (instr / 1000) % 10 == 1;
+                let l_value = if l_imm { l as i32 } else { program[l as usize] };
+                let r_value = if r_imm { r as i32 } else { program[r as usize] };
+                program[res as usize] = if l_value == r_value { 1 } else { 0 };
+                pc += 4;
             }
             99 => {
                 // halt
