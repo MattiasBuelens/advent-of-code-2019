@@ -49,110 +49,170 @@ fn part2(input: &Vec<i32>) -> i32 {
     answer
 }
 
+enum ParameterPosition {
+    Pos1,
+    Pos2,
+}
+
+enum InputValue {
+    Position(usize),
+    Immediate(i32),
+}
+
+impl InputValue {
+    #[inline]
+    fn parse(opcode: i32, pos: ParameterPosition, value: i32) -> InputValue {
+        let mode = match pos {
+            ParameterPosition::Pos1 => (opcode / 100) % 10,
+            ParameterPosition::Pos2 => (opcode / 1000) % 10,
+        };
+        match mode {
+            0 => InputValue::Position(value as usize),
+            1 => InputValue::Immediate(value),
+            _ => panic!("unexpected parameter mode {}", mode),
+        }
+    }
+
+    #[inline]
+    fn read(&self, program: &Vec<i32>) -> i32 {
+        match *self {
+            InputValue::Position(pos) => program[pos],
+            InputValue::Immediate(value) => value,
+        }
+    }
+}
+
+struct OutputValue(usize);
+
+impl OutputValue {
+    #[inline]
+    fn write(&self, program: &mut Vec<i32>, value: i32) {
+        program[self.0] = value;
+    }
+}
+
+enum Instruction {
+    Add(InputValue, InputValue, OutputValue),
+    Multiply(InputValue, InputValue, OutputValue),
+    Read(OutputValue),
+    Write(InputValue),
+    JumpIfTrue(InputValue, InputValue),
+    JumpIfFalse(InputValue, InputValue),
+    LessThan(InputValue, InputValue, OutputValue),
+    Equals(InputValue, InputValue, OutputValue),
+    Halt,
+}
+
+impl Instruction {
+    fn parse(program: &Vec<i32>, pc: &mut usize) -> Instruction {
+        let opcode = program[*pc];
+        let instruction = match opcode % 100 {
+            1 => Instruction::Add(
+                InputValue::parse(opcode, ParameterPosition::Pos1, program[*pc + 1]),
+                InputValue::parse(opcode, ParameterPosition::Pos2, program[*pc + 2]),
+                OutputValue(program[*pc + 3] as usize),
+            ),
+            2 => Instruction::Multiply(
+                InputValue::parse(opcode, ParameterPosition::Pos1, program[*pc + 1]),
+                InputValue::parse(opcode, ParameterPosition::Pos2, program[*pc + 2]),
+                OutputValue(program[*pc + 3] as usize),
+            ),
+            3 => Instruction::Read(OutputValue(program[*pc + 1] as usize)),
+            4 => Instruction::Write(InputValue::parse(
+                opcode,
+                ParameterPosition::Pos1,
+                program[*pc + 1],
+            )),
+            5 => Instruction::JumpIfTrue(
+                InputValue::parse(opcode, ParameterPosition::Pos1, program[*pc + 1]),
+                InputValue::parse(opcode, ParameterPosition::Pos2, program[*pc + 2]),
+            ),
+            6 => Instruction::JumpIfFalse(
+                InputValue::parse(opcode, ParameterPosition::Pos1, program[*pc + 1]),
+                InputValue::parse(opcode, ParameterPosition::Pos2, program[*pc + 2]),
+            ),
+            7 => Instruction::LessThan(
+                InputValue::parse(opcode, ParameterPosition::Pos1, program[*pc + 1]),
+                InputValue::parse(opcode, ParameterPosition::Pos2, program[*pc + 2]),
+                OutputValue(program[*pc + 3] as usize),
+            ),
+            8 => Instruction::Equals(
+                InputValue::parse(opcode, ParameterPosition::Pos1, program[*pc + 1]),
+                InputValue::parse(opcode, ParameterPosition::Pos2, program[*pc + 2]),
+                OutputValue(program[*pc + 3] as usize),
+            ),
+            99 => Instruction::Halt,
+            _ => panic!("unexpected opcode {} at index {}", opcode, *pc),
+        };
+        *pc += instruction.length();
+        instruction
+    }
+
+    #[inline]
+    fn length(&self) -> usize {
+        match *self {
+            Instruction::Add(_, _, _)
+            | Instruction::Multiply(_, _, _)
+            | Instruction::LessThan(_, _, _)
+            | Instruction::Equals(_, _, _) => 4,
+            Instruction::JumpIfTrue(_, _) | Instruction::JumpIfFalse(_, _) => 3,
+            Instruction::Read(_) | Instruction::Write(_) => 2,
+            Instruction::Halt => 1,
+        }
+    }
+
+    fn evaluate<'a>(
+        &self,
+        program: &mut Vec<i32>,
+        pc: &mut usize,
+        input: &mut impl Iterator<Item = &'a i32>,
+        output: &mut Vec<i32>,
+    ) -> bool {
+        match self {
+            Instruction::Add(left, right, result) => {
+                result.write(program, left.read(&program) + right.read(&program));
+            }
+            Instruction::Multiply(left, right, result) => {
+                result.write(program, left.read(&program) * right.read(&program));
+            }
+            Instruction::Read(result) => {
+                result.write(program, *input.next().expect("missing input"));
+            }
+            Instruction::Write(value) => {
+                output.push(value.read(&program));
+            }
+            Instruction::JumpIfTrue(test, jump) => {
+                if test.read(&program) != 0 {
+                    *pc = jump.read(&program) as usize;
+                }
+            }
+            Instruction::JumpIfFalse(test, jump) => {
+                if test.read(&program) == 0 {
+                    *pc = jump.read(&program) as usize;
+                }
+            }
+            Instruction::LessThan(left, right, result) => {
+                let test = left.read(&program) < right.read(program);
+                result.write(program, if test { 1 } else { 0 });
+            }
+            Instruction::Equals(left, right, result) => {
+                let test = left.read(&program) == right.read(program);
+                result.write(program, if test { 1 } else { 0 });
+            }
+            Instruction::Halt => return true,
+        }
+        false
+    }
+}
+
 fn run(program: &mut Vec<i32>, input: &Vec<i32>) -> Vec<i32> {
     let mut input_iter = input.iter();
     let mut output = Vec::new();
-    let mut pc = 0; // program counter
+    let mut pc = 0usize; // program counter
     loop {
-        let instr = program[pc];
-        let opcode = instr % 100;
-        match opcode {
-            1 => {
-                // add
-                let l = program[pc + 1];
-                let r = program[pc + 2];
-                let res = program[pc + 3];
-                let l_imm = (instr / 100) % 10 == 1;
-                let r_imm = (instr / 1000) % 10 == 1;
-                let l_value = if l_imm { l as i32 } else { program[l as usize] };
-                let r_value = if r_imm { r as i32 } else { program[r as usize] };
-                program[res as usize] = l_value + r_value;
-                pc += 4;
-            }
-            2 => {
-                // multiply
-                let l = program[pc + 1];
-                let r = program[pc + 2];
-                let res = program[pc + 3];
-                let l_imm = (instr / 100) % 10 == 1;
-                let r_imm = (instr / 1000) % 10 == 1;
-                let l_value = if l_imm { l } else { program[l as usize] };
-                let r_value = if r_imm { r } else { program[r as usize] };
-                program[res as usize] = l_value * r_value;
-                pc += 4;
-            }
-            3 => {
-                // read input
-                let res = program[pc + 1];
-                let input_value = *input_iter.next().expect("missing input");
-                program[res as usize] = input_value;
-                pc += 2;
-            }
-            4 => {
-                // write output
-                let o = program[pc + 1];
-                let o_imm = (instr / 100) % 10 == 1;
-                let o_value = if o_imm { o as i32 } else { program[o as usize] };
-                output.push(o_value);
-                pc += 2;
-            }
-            5 => {
-                // jump if true
-                let c = program[pc + 1];
-                let j = program[pc + 2];
-                let c_imm = (instr / 100) % 10 == 1;
-                let j_imm = (instr / 1000) % 10 == 1;
-                let c_value = if c_imm { c as i32 } else { program[c as usize] };
-                let j_value = if j_imm { j } else { program[j as usize] };
-                pc = if c_value != 0 {
-                    j_value as usize
-                } else {
-                    pc + 3
-                };
-            }
-            6 => {
-                // jump if false
-                let c = program[pc + 1];
-                let j = program[pc + 2];
-                let c_imm = (instr / 100) % 10 == 1;
-                let j_imm = (instr / 1000) % 10 == 1;
-                let c_value = if c_imm { c as i32 } else { program[c as usize] };
-                let j_value = if j_imm { j } else { program[j as usize] };
-                pc = if c_value == 0 {
-                    j_value as usize
-                } else {
-                    pc + 3
-                };
-            }
-            7 => {
-                // less than
-                let l = program[pc + 1];
-                let r = program[pc + 2];
-                let res = program[pc + 3];
-                let l_imm = (instr / 100) % 10 == 1;
-                let r_imm = (instr / 1000) % 10 == 1;
-                let l_value = if l_imm { l as i32 } else { program[l as usize] };
-                let r_value = if r_imm { r as i32 } else { program[r as usize] };
-                program[res as usize] = if l_value < r_value { 1 } else { 0 };
-                pc += 4;
-            }
-            8 => {
-                // equals
-                let l = program[pc + 1];
-                let r = program[pc + 2];
-                let res = program[pc + 3];
-                let l_imm = (instr / 100) % 10 == 1;
-                let r_imm = (instr / 1000) % 10 == 1;
-                let l_value = if l_imm { l as i32 } else { program[l as usize] };
-                let r_value = if r_imm { r as i32 } else { program[r as usize] };
-                program[res as usize] = if l_value == r_value { 1 } else { 0 };
-                pc += 4;
-            }
-            99 => {
-                // halt
-                break;
-            }
-            _ => panic!("unexpected opcode {} at index {}", opcode, pc),
+        let instr = Instruction::parse(program, &mut pc);
+        if instr.evaluate(program, &mut pc, &mut input_iter, &mut output) {
+            break;
         }
     }
     output
