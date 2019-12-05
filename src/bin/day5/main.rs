@@ -104,53 +104,51 @@ enum Instruction {
 }
 
 impl Instruction {
-    fn parse(program: &Vec<i32>, pc: &mut usize) -> Instruction {
-        let opcode = program[*pc];
-        let instruction = match opcode % 100 {
+    fn parse(program: &Vec<i32>, pc: usize) -> Instruction {
+        let opcode = program[pc];
+        match opcode % 100 {
             1 => Instruction::Add(
-                InputValue::parse(opcode, ParameterPosition::Pos1, program[*pc + 1]),
-                InputValue::parse(opcode, ParameterPosition::Pos2, program[*pc + 2]),
-                OutputValue(program[*pc + 3] as usize),
+                InputValue::parse(opcode, ParameterPosition::Pos1, program[pc + 1]),
+                InputValue::parse(opcode, ParameterPosition::Pos2, program[pc + 2]),
+                OutputValue(program[pc + 3] as usize),
             ),
             2 => Instruction::Multiply(
-                InputValue::parse(opcode, ParameterPosition::Pos1, program[*pc + 1]),
-                InputValue::parse(opcode, ParameterPosition::Pos2, program[*pc + 2]),
-                OutputValue(program[*pc + 3] as usize),
+                InputValue::parse(opcode, ParameterPosition::Pos1, program[pc + 1]),
+                InputValue::parse(opcode, ParameterPosition::Pos2, program[pc + 2]),
+                OutputValue(program[pc + 3] as usize),
             ),
-            3 => Instruction::Read(OutputValue(program[*pc + 1] as usize)),
+            3 => Instruction::Read(OutputValue(program[pc + 1] as usize)),
             4 => Instruction::Write(InputValue::parse(
                 opcode,
                 ParameterPosition::Pos1,
-                program[*pc + 1],
+                program[pc + 1],
             )),
             5 => Instruction::JumpIfTrue(
-                InputValue::parse(opcode, ParameterPosition::Pos1, program[*pc + 1]),
-                InputValue::parse(opcode, ParameterPosition::Pos2, program[*pc + 2]),
+                InputValue::parse(opcode, ParameterPosition::Pos1, program[pc + 1]),
+                InputValue::parse(opcode, ParameterPosition::Pos2, program[pc + 2]),
             ),
             6 => Instruction::JumpIfFalse(
-                InputValue::parse(opcode, ParameterPosition::Pos1, program[*pc + 1]),
-                InputValue::parse(opcode, ParameterPosition::Pos2, program[*pc + 2]),
+                InputValue::parse(opcode, ParameterPosition::Pos1, program[pc + 1]),
+                InputValue::parse(opcode, ParameterPosition::Pos2, program[pc + 2]),
             ),
             7 => Instruction::LessThan(
-                InputValue::parse(opcode, ParameterPosition::Pos1, program[*pc + 1]),
-                InputValue::parse(opcode, ParameterPosition::Pos2, program[*pc + 2]),
-                OutputValue(program[*pc + 3] as usize),
+                InputValue::parse(opcode, ParameterPosition::Pos1, program[pc + 1]),
+                InputValue::parse(opcode, ParameterPosition::Pos2, program[pc + 2]),
+                OutputValue(program[pc + 3] as usize),
             ),
             8 => Instruction::Equals(
-                InputValue::parse(opcode, ParameterPosition::Pos1, program[*pc + 1]),
-                InputValue::parse(opcode, ParameterPosition::Pos2, program[*pc + 2]),
-                OutputValue(program[*pc + 3] as usize),
+                InputValue::parse(opcode, ParameterPosition::Pos1, program[pc + 1]),
+                InputValue::parse(opcode, ParameterPosition::Pos2, program[pc + 2]),
+                OutputValue(program[pc + 3] as usize),
             ),
             99 => Instruction::Halt,
-            _ => panic!("unexpected opcode {} at index {}", opcode, *pc),
-        };
-        *pc += instruction.length();
-        instruction
+            _ => panic!("unexpected opcode {} at index {}", opcode, pc),
+        }
     }
 
     #[inline]
     fn length(&self) -> usize {
-        match *self {
+        match self {
             Instruction::Add(_, _, _)
             | Instruction::Multiply(_, _, _)
             | Instruction::LessThan(_, _, _)
@@ -170,33 +168,33 @@ impl Instruction {
     ) -> bool {
         match self {
             Instruction::Add(left, right, result) => {
-                result.write(program, left.read(&program) + right.read(&program));
+                result.write(program, left.read(program) + right.read(program));
             }
             Instruction::Multiply(left, right, result) => {
-                result.write(program, left.read(&program) * right.read(&program));
+                result.write(program, left.read(program) * right.read(program));
             }
             Instruction::Read(result) => {
                 result.write(program, *input.next().expect("missing input"));
             }
             Instruction::Write(value) => {
-                output.push(value.read(&program));
+                output.push(value.read(program));
             }
             Instruction::JumpIfTrue(test, jump) => {
-                if test.read(&program) != 0 {
-                    *pc = jump.read(&program) as usize;
+                if test.read(program) != 0 {
+                    *pc = jump.read(program) as usize;
                 }
             }
             Instruction::JumpIfFalse(test, jump) => {
-                if test.read(&program) == 0 {
-                    *pc = jump.read(&program) as usize;
+                if test.read(program) == 0 {
+                    *pc = jump.read(program) as usize;
                 }
             }
             Instruction::LessThan(left, right, result) => {
-                let test = left.read(&program) < right.read(program);
+                let test = left.read(program) < right.read(program);
                 result.write(program, if test { 1 } else { 0 });
             }
             Instruction::Equals(left, right, result) => {
-                let test = left.read(&program) == right.read(program);
+                let test = left.read(program) == right.read(program);
                 result.write(program, if test { 1 } else { 0 });
             }
             Instruction::Halt => return true,
@@ -206,12 +204,13 @@ impl Instruction {
 }
 
 fn run(program: &mut Vec<i32>, input: &Vec<i32>) -> Vec<i32> {
-    let mut input_iter = input.iter();
+    let mut input = input.iter();
     let mut output = Vec::new();
     let mut pc = 0usize; // program counter
     loop {
-        let instr = Instruction::parse(program, &mut pc);
-        if instr.evaluate(program, &mut pc, &mut input_iter, &mut output) {
+        let instr = Instruction::parse(program, pc);
+        pc += instr.length();
+        if instr.evaluate(program, &mut pc, &mut input, &mut output) {
             break;
         }
     }
