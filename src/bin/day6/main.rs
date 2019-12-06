@@ -93,3 +93,31 @@ impl OrbitMap {
         ancestors
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_part1() {
+        let input = vec![
+            "COM)B", "B)C", "C)D", "D)E", "E)F", "B)G", "G)H", "D)I", "E)J", "J)K", "K)L",
+        ];
+        let orbits: Vec<Orbit> = input.iter().map(|x| x.parse().unwrap()).collect();
+        let map = OrbitMap::from_orbits(orbits);
+
+        assert_eq!(map.total_orbits(), 42);
+    }
+
+    #[test]
+    fn test_part2() {
+        let input = vec![
+            "COM)B", "B)C", "C)D", "D)E", "E)F", "B)G", "G)H", "D)I", "E)J", "J)K", "K)L", "K)YOU",
+            "I)SAN",
+        ];
+        let orbits: Vec<Orbit> = input.iter().map(|x| x.parse().unwrap()).collect();
+        let map = OrbitMap::from_orbits(orbits);
+
+        assert_eq!(map.transfers_between("YOU", "SAN"), 4);
+    }
+}
