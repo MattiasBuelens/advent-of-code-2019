@@ -4,6 +4,10 @@ use std::str::FromStr;
 fn main() {
     let input = parse_input();
     println!("Answer to part 1: {}", input.total_orbits());
+    println!(
+        "Answer to part 2: {}",
+        input.transfers_between("YOU", "SAN")
+    );
 }
 
 #[derive(Debug)]
@@ -57,5 +61,35 @@ impl OrbitMap {
             None => 0,
             Some(center) => 1 + self.count_orbits_of(center),
         }
+    }
+
+    fn transfers_between(&self, start: &str, target: &str) -> usize {
+        let start_ancestors = self.get_ancestors(String::from(start));
+        let target_ancestors = self.get_ancestors(String::from(target));
+        let common_ancestor_index = start_ancestors
+            .iter()
+            .position(|ancestor| target_ancestors.contains(ancestor))
+            .expect("expected a common ancestor");
+        let common_ancestor = &start_ancestors[common_ancestor_index];
+        let start_to_common = common_ancestor_index;
+        let common_to_target = target_ancestors
+            .iter()
+            .position(|x| x == common_ancestor)
+            .unwrap();
+        start_to_common + common_to_target
+    }
+
+    fn get_ancestors(&self, mut object: String) -> Vec<String> {
+        let mut ancestors: Vec<String> = Vec::new();
+        loop {
+            object = match self.map.get(&object) {
+                None => break,
+                Some(parent) => {
+                    ancestors.push(parent.clone());
+                    parent.clone()
+                }
+            }
+        }
+        ancestors
     }
 }
