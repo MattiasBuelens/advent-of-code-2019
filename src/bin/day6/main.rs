@@ -1,5 +1,4 @@
-use std::collections::{HashMap, HashSet};
-use std::str::FromStr;
+use std::collections::HashMap;
 
 fn main() {
     let input = parse_input();
@@ -10,48 +9,40 @@ fn main() {
     );
 }
 
-#[derive(Debug)]
-struct Orbit(String, String);
+type Orbit = (String, String);
 
-impl FromStr for Orbit {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let parts: Vec<&str> = s.split(')').collect();
-        Ok(Orbit(parts[0].into(), parts[1].into()))
-    }
+fn parse_orbit(s: &str) -> Orbit {
+    let parts: Vec<&str> = s.split(')').collect();
+    (parts[0].into(), parts[1].into())
 }
 
 fn parse_input() -> OrbitMap {
     let orbits = include_str!("input")
         .trim()
         .split('\n')
-        .map(|x| x.parse().expect("expected number"))
+        .map(parse_orbit)
         .collect();
     OrbitMap::from_orbits(orbits)
 }
 
 #[derive(Debug)]
 struct OrbitMap {
-    objects: HashSet<String>,
     map: HashMap<String, String>,
 }
 
 impl OrbitMap {
     fn from_orbits(orbits: Vec<Orbit>) -> OrbitMap {
-        let mut objects: HashSet<String> = HashSet::new();
-        let mut map: HashMap<String, String> = HashMap::new();
-        for orbit in orbits {
-            objects.insert(orbit.0.clone());
-            objects.insert(orbit.1.clone());
-            map.insert(orbit.1, orbit.0);
-        }
-        OrbitMap { objects, map }
+        let map: HashMap<String, String> = orbits
+            .iter()
+            .cloned()
+            .map(|(center, satellite)| (satellite, center))
+            .collect();
+        OrbitMap { map }
     }
 
     fn total_orbits(&self) -> usize {
-        self.objects
-            .iter()
+        self.map
+            .keys()
             .map(|object| self.count_orbits_of(object))
             .sum()
     }
@@ -81,14 +72,9 @@ impl OrbitMap {
 
     fn get_ancestors(&self, mut object: String) -> Vec<String> {
         let mut ancestors: Vec<String> = Vec::new();
-        loop {
-            object = match self.map.get(&object) {
-                None => break,
-                Some(parent) => {
-                    ancestors.push(parent.clone());
-                    parent.clone()
-                }
-            }
+        while let Some(parent) = self.map.get(&object) {
+            ancestors.push(parent.clone());
+            object = parent.clone();
         }
         ancestors
     }
@@ -103,7 +89,7 @@ mod tests {
         let input = vec![
             "COM)B", "B)C", "C)D", "D)E", "E)F", "B)G", "G)H", "D)I", "E)J", "J)K", "K)L",
         ];
-        let orbits: Vec<Orbit> = input.iter().map(|x| x.parse().unwrap()).collect();
+        let orbits: Vec<Orbit> = input.iter().map(|x| parse_orbit(x)).collect();
         let map = OrbitMap::from_orbits(orbits);
 
         assert_eq!(map.total_orbits(), 42);
@@ -115,7 +101,7 @@ mod tests {
             "COM)B", "B)C", "C)D", "D)E", "E)F", "B)G", "G)H", "D)I", "E)J", "J)K", "K)L", "K)YOU",
             "I)SAN",
         ];
-        let orbits: Vec<Orbit> = input.iter().map(|x| x.parse().unwrap()).collect();
+        let orbits: Vec<Orbit> = input.iter().map(|x| parse_orbit(x)).collect();
         let map = OrbitMap::from_orbits(orbits);
 
         assert_eq!(map.transfers_between("YOU", "SAN"), 4);
