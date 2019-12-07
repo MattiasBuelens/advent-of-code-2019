@@ -178,15 +178,15 @@ impl Instruction {
     }
 }
 
-struct ProgramMachine {
+struct Machine {
     program: Vec<i32>,
     pc: usize,
     input: VecDeque<i32>,
 }
 
-impl ProgramMachine {
-    fn new(program: Vec<i32>, input: &Vec<i32>) -> ProgramMachine {
-        ProgramMachine {
+impl Machine {
+    fn new(program: Vec<i32>, input: &Vec<i32>) -> Machine {
+        Machine {
             program,
             pc: 0usize,
             input: VecDeque::from(input.clone()),
@@ -228,7 +228,7 @@ impl ProgramMachine {
 fn run_chain(program: &Vec<i32>, phase_settings: &Vec<i32>) -> i32 {
     let mut signal = 0;
     for phase_setting in phase_settings {
-        let mut machine = ProgramMachine::new(program.clone(), &vec![*phase_setting]);
+        let mut machine = Machine::new(program.clone(), &vec![*phase_setting]);
         let output = machine.run_to_output(signal);
         signal = output.expect("expected an output");
     }
@@ -270,9 +270,9 @@ fn part1(input: &Vec<i32>) -> i32 {
 }
 
 fn run_feedback_loop(program: &Vec<i32>, phase_settings: &Vec<i32>) -> i32 {
-    let mut machines: Vec<ProgramMachine> = phase_settings
+    let mut machines: Vec<Machine> = phase_settings
         .iter()
-        .map(|setting| ProgramMachine::new(program.clone(), &vec![*setting]))
+        .map(|setting| Machine::new(program.clone(), &vec![*setting]))
         .collect();
     // To start the process, a 0 signal is sent to amplifier A's input exactly once.
     let mut signal = 0;
