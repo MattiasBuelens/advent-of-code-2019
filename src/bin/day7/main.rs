@@ -2,7 +2,7 @@ use std::cmp::max;
 
 fn main() {
     let input = parse_input();
-    //    println!("Answer to part 1: {}", part1(&input));
+    println!("Answer to part 1: {}", part1(&input));
     println!("Answer to part 2: {}", part2(&input));
 }
 
