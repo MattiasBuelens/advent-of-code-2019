@@ -1,5 +1,4 @@
 use std::cmp::max;
-use std::ops::DerefMut;
 
 fn main() {
     let input = parse_input();
@@ -184,21 +183,6 @@ impl Instruction {
     }
 }
 
-trait Machine {
-    fn add_input(&mut self, value: i32);
-    fn step(&mut self) -> StepResult;
-}
-
-impl Machine for Box<dyn Machine> {
-    fn add_input(&mut self, value: i32) {
-        self.deref_mut().add_input(value)
-    }
-
-    fn step(&mut self) -> StepResult {
-        self.deref_mut().step()
-    }
-}
-
 struct ProgramMachine {
     program: Vec<i32>,
     pc: usize,
@@ -230,9 +214,19 @@ impl ProgramMachine {
         }
         output
     }
-}
 
-impl Machine for ProgramMachine {
+    fn run_to_output(&mut self, input: i32) -> Option<i32> {
+        self.add_input(input);
+        loop {
+            match self.step() {
+                StepResult::NeedInput => panic!("missing input"),
+                StepResult::Output(value) => return Some(value),
+                StepResult::Halt => return None,
+                _ => {}
+            };
+        }
+    }
+
     fn add_input(&mut self, value: i32) {
         self.input.push(value);
     }
@@ -302,92 +296,31 @@ fn part1(input: &Vec<i32>) -> i32 {
     max_signal
 }
 
-struct Chain<M1: Machine, M2: Machine> {
-    head: M1,
-    tail: M2,
-}
-
-impl<M1: Machine, M2: Machine> Chain<M1, M2> {
-    fn new(head: M1, tail: M2) -> Chain<M1, M2> {
-        Chain { head, tail }
-    }
-}
-
-impl<M1: Machine, M2: Machine> Machine for Chain<M1, M2> {
-    fn add_input(&mut self, value: i32) {
-        self.head.add_input(value);
-    }
-
-    fn step(&mut self) -> StepResult {
-        let head_result = self.head.step();
-        if let StepResult::Output(value) = head_result {
-            // forward outputs from head to tail
-            self.tail.add_input(value);
-        }
-        let tail_result = self.tail.step();
-        match tail_result {
-            StepResult::Output(value) => {
-                // output from tail
-                tail_result
-            }
-            _ => match head_result {
-                StepResult::Output(value) => {
-                    // output has been forwarded to tail
-                    StepResult::Ok
-                }
-                StepResult::Halt => {
-                    // keep running tail after head has halted
-                    tail_result
-                }
-                _ => head_result,
-            },
-        }
-    }
-}
-
-fn make_chain(mut machines: Vec<Box<dyn Machine>>) -> Box<dyn Machine> {
-    match machines.len() {
-        0 => panic!("no machines"),
-        1 => Box::new(machines.pop().unwrap()),
-        _ => {
-            let tail = machines.pop().unwrap();
-            Box::new(Chain::new(make_chain(machines), tail))
-        }
-    }
-}
-
 fn run_feedback_loop(program: &Vec<i32>, phase_settings: &Vec<i32>) -> i32 {
-    let machines: Vec<Box<dyn Machine>> = phase_settings
+    let mut machines: Vec<ProgramMachine> = phase_settings
         .iter()
         .map(|setting| {
-            let machine = ProgramMachine::new(program.clone(), &vec![*setting]);
-            Box::new(machine) as Box<dyn Machine>
+            ProgramMachine::new(program.clone(), &vec![*setting])
         })
         .collect();
-    let mut chain = make_chain(machines);
     // To start the process, a 0 signal is sent to amplifier A's input exactly once.
-    chain.add_input(0);
-    let mut output = vec![];
+    let mut signal = 0;
     loop {
-        let result = chain.step();
-        match chain.step() {
-            StepResult::NeedInput => {
-                // keep going
+        let mut halted = true;
+        for machine in machines.iter_mut() {
+            match machine.run_to_output(signal) {
+                Some(output) => {
+                    signal = output;
+                    halted = false;
+                }
+                None => {}
             }
-            StepResult::Output(value) => {
-                chain.add_input(value);
-                output.push(value);
-            }
-            StepResult::Halt => {
-                break;
-            }
-            StepResult::Ok => {
-                // keep going
-            }
-            StepResult::Jump(_) => panic!("cannot happen"),
-        };
+        }
+        if halted {
+            break;
+        }
     }
-    output.pop().unwrap()
+    signal
 }
 
 fn part2(input: &Vec<i32>) -> i32 {
