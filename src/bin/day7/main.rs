@@ -46,10 +46,10 @@ fn get_permutations(values: &Vec<i32>) -> Vec<Vec<i32>> {
     perms
 }
 
-fn part1(input: &Vec<i32>) -> i32 {
+fn part1(program: &Vec<i32>) -> i32 {
     let mut max_signal = 0;
     for perm in get_permutations(&(0..=4).collect()) {
-        max_signal = max(max_signal, run_chain(input, &perm));
+        max_signal = max(max_signal, run_chain(program, &perm));
     }
     max_signal
 }
@@ -79,10 +79,10 @@ fn run_feedback_loop(program: &Vec<i32>, phase_settings: &Vec<i32>) -> i32 {
     signal
 }
 
-fn part2(input: &Vec<i32>) -> i32 {
+fn part2(program: &Vec<i32>) -> i32 {
     let mut max_signal = 0;
     for perm in get_permutations(&(5..=9).collect()) {
-        max_signal = max(max_signal, run_feedback_loop(input, &perm));
+        max_signal = max(max_signal, run_feedback_loop(program, &perm));
     }
     max_signal
 }

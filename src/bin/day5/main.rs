@@ -7,12 +7,10 @@ fn main() {
     println!("Answer to part 2: {}", part2(&input));
 }
 
-fn part1(input: &Vec<i32>) -> i32 {
-    let program = input.clone();
-
+fn part1(program: &Vec<i32>) -> i32 {
     // The TEST diagnostic program will start by requesting from the user the ID of the system to
     // test by running an input instruction - provide it 1, the ID for the ship's air conditioner unit.
-    let mut output = run(program, vec![1]);
+    let mut output = run(program.clone(), vec![1]);
 
     let last_output = output.pop();
 
@@ -28,12 +26,10 @@ fn part1(input: &Vec<i32>) -> i32 {
     answer
 }
 
-fn part2(input: &Vec<i32>) -> i32 {
-    let program = input.clone();
-
+fn part2(program: &Vec<i32>) -> i32 {
     // This time, when the TEST diagnostic program runs its input instruction to get the ID
     // of the system to test, provide it 5, the ID for the ship's thermal radiator controller.
-    let output = run(program, vec![5]);
+    let output = run(program.clone(), vec![5]);
 
     // This diagnostic test suite only outputs one number, the diagnostic code.
     assert_eq!(output.len(), 1);

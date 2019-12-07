@@ -7,8 +7,8 @@ fn main() {
     println!("Answer to part 2: {}", part2(&input));
 }
 
-fn part1(input: &Vec<i32>) -> i32 {
-    let mut program = input.clone();
+fn part1(program: &Vec<i32>) -> i32 {
+    let mut program = program.clone();
     program[1] = 12;
     program[2] = 2;
     let mut machine = Machine::new(program, vec![]);
@@ -16,15 +16,15 @@ fn part1(input: &Vec<i32>) -> i32 {
     machine.program()[0]
 }
 
-fn part2(input: &Vec<i32>) -> i32 {
-    let (noun, verb) = solve_for(input, 19690720);
+fn part2(program: &Vec<i32>) -> i32 {
+    let (noun, verb) = solve_for(program, 19690720);
     (noun * 100) + verb
 }
 
-fn solve_for(input: &Vec<i32>, target: i32) -> (i32, i32) {
+fn solve_for(program: &Vec<i32>, target: i32) -> (i32, i32) {
     for noun in 0..=99 {
         for verb in 0..=99 {
-            let mut program = input.clone();
+            let mut program = program.clone();
             program[1] = noun;
             program[2] = verb;
             let mut machine = Machine::new(program, vec![]);
