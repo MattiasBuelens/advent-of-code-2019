@@ -15,11 +15,6 @@ fn parse_input() -> Vec<i32> {
         .collect();
 }
 
-enum ParameterPosition {
-    Pos1,
-    Pos2,
-}
-
 #[derive(Debug)]
 enum InputValue {
     Position(usize),
@@ -28,11 +23,7 @@ enum InputValue {
 
 impl InputValue {
     #[inline]
-    fn parse(opcode: i32, pos: ParameterPosition, value: i32) -> InputValue {
-        let mode = match pos {
-            ParameterPosition::Pos1 => (opcode / 100) % 10,
-            ParameterPosition::Pos2 => (opcode / 1000) % 10,
-        };
+    fn parse(mode: i32, value: i32) -> InputValue {
         match mode {
             0 => InputValue::Position(value as usize),
             1 => InputValue::Immediate(value),
@@ -84,39 +75,37 @@ enum StepResult {
 impl Instruction {
     fn parse(program: &Vec<i32>, pc: usize) -> Instruction {
         let opcode = program[pc];
+        let mode1 = (opcode / 100) % 10;
+        let mode2 = (opcode / 1000) % 10;
         match opcode % 100 {
             1 => Instruction::Add(
-                InputValue::parse(opcode, ParameterPosition::Pos1, program[pc + 1]),
-                InputValue::parse(opcode, ParameterPosition::Pos2, program[pc + 2]),
+                InputValue::parse(mode1, program[pc + 1]),
+                InputValue::parse(mode2, program[pc + 2]),
                 OutputValue(program[pc + 3] as usize),
             ),
             2 => Instruction::Multiply(
-                InputValue::parse(opcode, ParameterPosition::Pos1, program[pc + 1]),
-                InputValue::parse(opcode, ParameterPosition::Pos2, program[pc + 2]),
+                InputValue::parse(mode1, program[pc + 1]),
+                InputValue::parse(mode2, program[pc + 2]),
                 OutputValue(program[pc + 3] as usize),
             ),
             3 => Instruction::Read(OutputValue(program[pc + 1] as usize)),
-            4 => Instruction::Write(InputValue::parse(
-                opcode,
-                ParameterPosition::Pos1,
-                program[pc + 1],
-            )),
+            4 => Instruction::Write(InputValue::parse(mode1, program[pc + 1])),
             5 => Instruction::JumpIfTrue(
-                InputValue::parse(opcode, ParameterPosition::Pos1, program[pc + 1]),
-                InputValue::parse(opcode, ParameterPosition::Pos2, program[pc + 2]),
+                InputValue::parse(mode1, program[pc + 1]),
+                InputValue::parse(mode2, program[pc + 2]),
             ),
             6 => Instruction::JumpIfFalse(
-                InputValue::parse(opcode, ParameterPosition::Pos1, program[pc + 1]),
-                InputValue::parse(opcode, ParameterPosition::Pos2, program[pc + 2]),
+                InputValue::parse(mode1, program[pc + 1]),
+                InputValue::parse(mode2, program[pc + 2]),
             ),
             7 => Instruction::LessThan(
-                InputValue::parse(opcode, ParameterPosition::Pos1, program[pc + 1]),
-                InputValue::parse(opcode, ParameterPosition::Pos2, program[pc + 2]),
+                InputValue::parse(mode1, program[pc + 1]),
+                InputValue::parse(mode2, program[pc + 2]),
                 OutputValue(program[pc + 3] as usize),
             ),
             8 => Instruction::Equals(
-                InputValue::parse(opcode, ParameterPosition::Pos1, program[pc + 1]),
-                InputValue::parse(opcode, ParameterPosition::Pos2, program[pc + 2]),
+                InputValue::parse(mode1, program[pc + 1]),
+                InputValue::parse(mode2, program[pc + 2]),
                 OutputValue(program[pc + 3] as usize),
             ),
             99 => Instruction::Halt,
@@ -137,7 +126,7 @@ impl Instruction {
         }
     }
 
-    fn evaluate<'a>(&self, program: &mut Vec<i32>, input: &mut VecDeque<i32>) -> StepResult {
+    fn evaluate(&self, program: &mut Vec<i32>, input: &mut VecDeque<i32>) -> StepResult {
         match self {
             Instruction::Add(left, right, result) => {
                 result.write(program, left.read(program) + right.read(program));
