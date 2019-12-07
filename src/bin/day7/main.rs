@@ -20,7 +20,8 @@ fn run_chain(program: &Vec<i32>, phase_settings: &Vec<i32>) -> i32 {
     let mut signal = 0;
     for phase_setting in phase_settings {
         let mut machine = Machine::new(program.clone(), &vec![*phase_setting]);
-        let output = machine.run_to_output(signal);
+        machine.add_input(signal);
+        let output = machine.run_to_output();
         signal = output.expect("expected an output");
     }
     signal
@@ -69,7 +70,8 @@ fn run_feedback_loop(program: &Vec<i32>, phase_settings: &Vec<i32>) -> i32 {
     let mut signal = 0;
     'outer: loop {
         for machine in machines.iter_mut() {
-            match machine.run_to_output(signal) {
+            machine.add_input(signal);
+            match machine.run_to_output() {
                 Some(output) => {
                     signal = output;
                 }

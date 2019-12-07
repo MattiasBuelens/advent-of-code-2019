@@ -167,8 +167,22 @@ impl Machine {
         }
     }
 
-    pub fn run_to_output(&mut self, input: i32) -> Option<i32> {
+    pub fn add_input(&mut self, input: i32) {
         self.input.push_back(input);
+    }
+
+    pub fn run(&mut self) -> Vec<i32> {
+        let mut output = Vec::new();
+        loop {
+            match self.run_to_output() {
+                Some(value) => output.push(value),
+                None => break,
+            };
+        }
+        output
+    }
+
+    pub fn run_to_output(&mut self) -> Option<i32> {
         loop {
             match self.step() {
                 StepResult::NeedInput => panic!("missing input"),
