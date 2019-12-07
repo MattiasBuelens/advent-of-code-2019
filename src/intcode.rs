@@ -167,6 +167,10 @@ impl Machine {
         }
     }
 
+    pub fn program(&self) -> &Vec<i32> {
+        &self.program
+    }
+
     pub fn add_input(&mut self, input: i32) {
         self.input.push_back(input);
     }

@@ -1,3 +1,5 @@
+use advent_of_code_2019::intcode::Machine;
+
 fn main() {
     let input = parse_input();
     println!("Answer to part 1: {}", part1(&input));
@@ -16,37 +18,9 @@ fn part1(input: &Vec<i32>) -> i32 {
     let mut program = input.clone();
     program[1] = 12;
     program[2] = 2;
-    run(&mut program);
-    program[0]
-}
-
-fn run(program: &mut Vec<i32>) {
-    let mut i = 0;
-    loop {
-        match program[i] {
-            1 => {
-                // add
-                let left = program[i + 1] as usize;
-                let right = program[i + 2] as usize;
-                let result = program[i + 3] as usize;
-                program[result] = program[left] + program[right];
-            }
-            2 => {
-                // multiply
-                let left = program[i + 1] as usize;
-                let right = program[i + 2] as usize;
-                let result = program[i + 3] as usize;
-                program[result] = program[left] * program[right];
-            }
-            99 => {
-                // halt
-                break;
-            }
-            _ => panic!("unexpected opcode {} at index {}", program[i], i),
-        }
-        // advance to next opcode
-        i += 4;
-    }
+    let mut machine = Machine::new(program, &vec![]);
+    machine.run();
+    machine.program()[0]
 }
 
 fn part2(input: &Vec<i32>) -> i32 {
@@ -60,8 +34,9 @@ fn solve_for(input: &Vec<i32>, target: i32) -> (i32, i32) {
             let mut program = input.clone();
             program[1] = noun;
             program[2] = verb;
-            run(&mut program);
-            if program[0] == target {
+            let mut machine = Machine::new(program, &vec![]);
+            machine.run();
+            if machine.program()[0] == target {
                 return (noun, verb);
             }
         }
@@ -73,9 +48,10 @@ fn solve_for(input: &Vec<i32>, target: i32) -> (i32, i32) {
 mod tests {
     use super::*;
 
-    fn run_and_return(mut input: Vec<i32>) -> Vec<i32> {
-        run(&mut input);
-        input
+    fn run_and_return(program: Vec<i32>) -> Vec<i32> {
+        let mut machine = Machine::new(program, &vec![]);
+        machine.run();
+        machine.program().clone()
     }
 
     #[test]
