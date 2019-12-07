@@ -193,21 +193,6 @@ impl ProgramMachine {
         }
     }
 
-    fn run(mut self) -> Vec<i32> {
-        let mut output = Vec::new();
-        loop {
-            match self.step() {
-                StepResult::NeedInput => panic!("missing input"),
-                StepResult::Output(value) => output.push(value),
-                StepResult::Halt => {
-                    break;
-                }
-                _ => {}
-            };
-        }
-        output
-    }
-
     fn run_to_output(&mut self, input: i32) -> Option<i32> {
         self.input.push_back(input);
         loop {
@@ -243,10 +228,9 @@ impl ProgramMachine {
 fn run_chain(program: &Vec<i32>, phase_settings: &Vec<i32>) -> i32 {
     let mut signal = 0;
     for phase_setting in phase_settings {
-        let input = vec![*phase_setting, signal];
-        let output = ProgramMachine::new(program.clone(), &input).run();
-        assert_eq!(output.len(), 1, "expected exactly one output");
-        signal = output[0];
+        let mut machine = ProgramMachine::new(program.clone(), &vec![*phase_setting]);
+        let output = machine.run_to_output(signal);
+        signal = output.expect("expected an output");
     }
     signal
 }
