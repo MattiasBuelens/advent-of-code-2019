@@ -1,5 +1,8 @@
+use std::cmp::max;
+
 fn main() {
     let input = parse_input();
+    println!("Answer to part 1: {}", part1(&input));
 }
 
 fn parse_input() -> Vec<i32> {
@@ -176,4 +179,48 @@ fn run(program: &mut Vec<i32>, input: &Vec<i32>) -> Vec<i32> {
         }
     }
     output
+}
+
+fn run_chain(program: &Vec<i32>, phase_settings: &Vec<i32>) -> i32 {
+    let mut signal = 0;
+    for phase_setting in phase_settings {
+        let mut program = program.clone();
+        let input = vec![*phase_setting, signal];
+        let output = run(&mut program, &input);
+        assert_eq!(output.len(), 1, "expected exactly one output");
+        signal = output[0];
+    }
+    signal
+}
+
+fn get_permutations() -> Vec<Vec<i32>> {
+    let mut perms = Vec::new();
+    for i in 0..5 {
+        for j in 0..5 {
+            if j != i {
+                for k in 0..5 {
+                    if k != i && k != j {
+                        for l in 0..5 {
+                            if l != i && l != j && l != k {
+                                for m in 0..5 {
+                                    if m != i && m != j && m != k && m != l {
+                                        perms.push(vec![i, j, k, l, m]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    perms
+}
+
+fn part1(input: &Vec<i32>) -> i32 {
+    let mut max_signal = 0;
+    for perm in get_permutations() {
+        max_signal = max(max_signal, run_chain(input, &perm));
+    }
+    max_signal
 }
