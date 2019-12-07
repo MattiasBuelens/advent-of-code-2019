@@ -67,6 +67,14 @@ enum Instruction {
     Halt,
 }
 
+enum StepResult {
+    Ok,
+    NeedInput,
+    Jump(usize),
+    Output(i32),
+    Halt,
+}
+
 impl Instruction {
     fn parse(program: &Vec<i32>, pc: usize) -> Instruction {
         let opcode = program[pc];
@@ -126,11 +134,9 @@ impl Instruction {
     fn evaluate<'a>(
         &self,
         program: &mut Vec<i32>,
-        pc: &mut usize,
         input: &Vec<i32>,
         input_index: &mut usize,
-        output: &mut Vec<i32>,
-    ) -> bool {
+    ) -> StepResult {
         match self {
             Instruction::Add(left, right, result) => {
                 result.write(program, left.read(program) + right.read(program));
@@ -138,22 +144,24 @@ impl Instruction {
             Instruction::Multiply(left, right, result) => {
                 result.write(program, left.read(program) * right.read(program));
             }
-            Instruction::Read(result) => {
-                let value = *input.get(*input_index).expect("missing input");
-                *input_index += 1;
-                result.write(program, value);
-            }
+            Instruction::Read(result) => match input.get(*input_index) {
+                Some(value) => {
+                    *input_index += 1;
+                    result.write(program, *value);
+                }
+                None => return StepResult::NeedInput,
+            },
             Instruction::Write(value) => {
-                output.push(value.read(program));
+                return StepResult::Output(value.read(program));
             }
             Instruction::JumpIfTrue(test, jump) => {
                 if test.read(program) != 0 {
-                    *pc = jump.read(program) as usize;
+                    return StepResult::Jump(jump.read(program) as usize);
                 }
             }
             Instruction::JumpIfFalse(test, jump) => {
                 if test.read(program) == 0 {
-                    *pc = jump.read(program) as usize;
+                    return StepResult::Jump(jump.read(program) as usize);
                 }
             }
             Instruction::LessThan(left, right, result) => {
@@ -164,62 +172,69 @@ impl Instruction {
                 let test = left.read(program) == right.read(program);
                 result.write(program, if test { 1 } else { 0 });
             }
-            Instruction::Halt => return true,
+            Instruction::Halt => return StepResult::Halt,
         }
-        false
+        StepResult::Ok
     }
 }
 
-struct Machine<'a> {
+struct Machine {
     program: Vec<i32>,
     pc: usize,
-    input: &'a Vec<i32>,
+    input: Vec<i32>,
     input_index: usize,
-    output: Vec<i32>,
 }
 
-impl<'a> Machine<'a> {
-    fn new(program: Vec<i32>, input: &'a Vec<i32>) -> Machine<'a> {
+impl Machine {
+    fn new(program: Vec<i32>, input: &Vec<i32>) -> Machine {
         Machine {
             program,
             pc: 0usize,
-            input,
+            input: input.clone(),
             input_index: 0usize,
-            output: Vec::new(),
         }
     }
 
     fn run(mut self) -> Vec<i32> {
+        let mut output = Vec::new();
         loop {
-            if self.step() {
-                break;
+            match self.step() {
+                StepResult::NeedInput => panic!("missing input"),
+                StepResult::Output(value) => output.push(value),
+                StepResult::Halt => {
+                    break;
+                }
+                _ => {}
+            };
+        }
+        output
+    }
+
+    fn step(&mut self) -> StepResult {
+        let instr = Instruction::parse(&self.program, self.pc);
+        let result = instr.evaluate(&mut self.program, &self.input, &mut self.input_index);
+        match result {
+            StepResult::NeedInput => {
+                // do not increment pc yet, so we can repeat instruction
+                result
+            }
+            StepResult::Jump(jump) => {
+                self.pc = jump;
+                StepResult::Ok
+            }
+            _ => {
+                self.pc += instr.length();
+                result
             }
         }
-        self.output
     }
-
-    fn step(&mut self) -> bool {
-        let instr = Instruction::parse(&self.program, self.pc);
-        self.pc += instr.length();
-        instr.evaluate(
-            &mut self.program,
-            &mut self.pc,
-            &self.input,
-            &mut self.input_index,
-            &mut self.output,
-        )
-    }
-}
-
-fn run(program: Vec<i32>, input: &Vec<i32>) -> Vec<i32> {
-    Machine::new(program, input).run()
 }
 
 fn run_chain(program: &Vec<i32>, phase_settings: &Vec<i32>) -> i32 {
     let mut signal = 0;
     for phase_setting in phase_settings {
         let input = vec![*phase_setting, signal];
-        let output = run(program.clone(), &input);
+        let output = Machine::new(program.clone(), &input).run();
         assert_eq!(output.len(), 1, "expected exactly one output");
         signal = output[0];
     }
