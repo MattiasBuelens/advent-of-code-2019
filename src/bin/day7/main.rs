@@ -20,35 +20,36 @@ fn run_chain(program: &Vec<i32>, phase_settings: &Vec<i32>) -> i32 {
     signal
 }
 
-fn get_permutations(values: &Vec<i32>) -> Vec<Vec<i32>> {
-    let mut perms = Vec::new();
-    for i in 0..5 {
-        for j in 0..5 {
-            if j != i {
-                for k in 0..5 {
-                    if k != i && k != j {
-                        for l in 0..5 {
-                            if l != i && l != j && l != k {
-                                for m in 0..5 {
-                                    if m != i && m != j && m != k && m != l {
-                                        perms.push(vec![
-                                            values[i], values[j], values[k], values[l], values[m],
-                                        ]);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+fn get_permutations(mut values: Vec<i32>) -> Vec<Vec<i32>> {
+    let mut output = Vec::new();
+    generate_permutations(values.len(), &mut values, &mut output);
+    output
+}
+
+fn generate_permutations<T: Clone>(k: usize, array: &mut Vec<T>, output: &mut Vec<Vec<T>>) {
+    // https://en.wikipedia.org/wiki/Heap%27s_algorithm
+    if k <= 1 {
+        output.push(array.clone());
+    } else {
+        // Generate permutations with kth unaltered
+        // Initially k == length(A)
+        generate_permutations(k - 1, array, output);
+        // Generate permutations for kth swapped with each k-1 initial
+        for i in 0..k - 1 {
+            // Swap choice dependent on parity of k (even or odd)
+            if k % 2 == 0 {
+                array.swap(i, k - 1);
+            } else {
+                array.swap(0, k - 1);
             }
+            generate_permutations(k - 1, array, output);
         }
     }
-    perms
 }
 
 fn part1(program: &Vec<i32>) -> i32 {
     let mut max_signal = 0;
-    for perm in get_permutations(&(0..=4).collect()) {
+    for perm in get_permutations((0..=4).collect()) {
         max_signal = max(max_signal, run_chain(program, &perm));
     }
     max_signal
@@ -81,7 +82,7 @@ fn run_feedback_loop(program: &Vec<i32>, phase_settings: &Vec<i32>) -> i32 {
 
 fn part2(program: &Vec<i32>) -> i32 {
     let mut max_signal = 0;
-    for perm in get_permutations(&(5..=9).collect()) {
+    for perm in get_permutations((5..=9).collect()) {
         max_signal = max(max_signal, run_feedback_loop(program, &perm));
     }
     max_signal
@@ -90,6 +91,30 @@ fn part2(program: &Vec<i32>) -> i32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_permutations() {
+        assert_eq!(get_permutations(vec![]), vec![
+            vec![],
+        ]);
+        assert_eq!(get_permutations(vec![1]), vec![
+            vec![1],
+        ]);
+        assert_eq!(get_permutations(vec![1, 2]), vec![
+            vec![1, 2],
+            vec![2, 1],
+        ]);
+        assert_eq!(get_permutations(vec![1, 2, 3]), vec![
+            vec![1, 2, 3],
+            vec![2, 1, 3],
+            vec![3, 1, 2],
+            vec![1, 3, 2],
+            vec![2, 3, 1],
+            vec![3, 2, 1],
+        ]);
+        assert_eq!(get_permutations(vec![1, 2, 3, 4]).len(), 1 * 2 * 3 * 4);
+        assert_eq!(get_permutations(vec![1, 2, 3, 4, 5]).len(), 1 * 2 * 3 * 4 * 5);
+    }
 
     #[test]
     fn test_part1() {
