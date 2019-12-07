@@ -320,6 +320,10 @@ impl<M1: Machine, M2: Machine> Machine for Chain<M1, M2> {
 
     fn step(&mut self) -> StepResult {
         let head_result = self.head.step();
+        if let StepResult::Output(value) = head_result {
+            // forward outputs from head to tail
+            self.tail.add_input(value);
+        }
         let tail_result = self.tail.step();
         match tail_result {
             StepResult::Output(value) => {
@@ -328,8 +332,7 @@ impl<M1: Machine, M2: Machine> Machine for Chain<M1, M2> {
             }
             _ => match head_result {
                 StepResult::Output(value) => {
-                    // forward outputs from head to tail
-                    self.tail.add_input(value);
+                    // output has been forwarded to tail
                     StepResult::Ok
                 }
                 StepResult::Halt => {
