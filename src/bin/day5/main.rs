@@ -1,17 +1,10 @@
+use advent_of_code_2019::input::parse_list;
 use advent_of_code_2019::intcode::Machine;
 
 fn main() {
-    let input = parse_input();
+    let input: Vec<i32> = parse_list(include_str!("input"), ',');
     println!("Answer to part 1: {}", part1(&input));
     println!("Answer to part 2: {}", part2(&input));
-}
-
-fn parse_input() -> Vec<i32> {
-    return include_str!("input")
-        .trim()
-        .split(',')
-        .map(|x| x.parse().expect("expected number"))
-        .collect();
 }
 
 fn part1(input: &Vec<i32>) -> i32 {

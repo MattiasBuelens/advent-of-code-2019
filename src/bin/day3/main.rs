@@ -4,8 +4,10 @@ use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::str::FromStr;
 
+use advent_of_code_2019::input::parse_list;
+
 fn main() {
-    let paths = parse_input();
+    let paths: Vec<Path> = parse_list(include_str!("input"), '\n');
     assert_eq!(paths.len(), 2);
 
     let trace1 = paths[0].trace();
@@ -14,14 +16,6 @@ fn main() {
 
     println!("Answer to part 1: {}", part1(&crossings));
     println!("Answer to part 2: {}", part2(&trace1, &trace2, &crossings));
-}
-
-fn parse_input() -> Vec<Path> {
-    return include_str!("input")
-        .trim()
-        .split('\n')
-        .map(|x| x.parse().expect("expected number"))
-        .collect();
 }
 
 fn part1(crossings: &Vec<Position>) -> i32 {

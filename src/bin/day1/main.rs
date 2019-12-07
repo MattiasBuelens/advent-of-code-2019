@@ -1,15 +1,9 @@
+use advent_of_code_2019::input::parse_list;
+
 fn main() {
-    let input = parse_input();
+    let input: Vec<u32> = parse_list(include_str!("input"), '\n');
     println!("Answer to part 1: {}", part1(&input));
     println!("Answer to part 2: {}", part2(&input));
-}
-
-fn parse_input() -> Vec<u32> {
-    return include_str!("input")
-        .trim()
-        .split('\n')
-        .map(|x| x.parse().expect("expected number"))
-        .collect();
 }
 
 fn part1(masses: &Vec<u32>) -> u32 {
