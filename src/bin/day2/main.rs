@@ -8,12 +8,7 @@ fn main() {
 }
 
 fn part1(program: &Vec<i32>) -> i32 {
-    let mut program = program.clone();
-    program[1] = 12;
-    program[2] = 2;
-    let mut machine = Machine::new(program, vec![]);
-    machine.run();
-    machine.program()[0]
+    run_with_noun_and_verb(program, 12, 2)
 }
 
 fn part2(program: &Vec<i32>) -> i32 {
@@ -21,15 +16,19 @@ fn part2(program: &Vec<i32>) -> i32 {
     (noun * 100) + verb
 }
 
+fn run_with_noun_and_verb(program: &Vec<i32>, noun: i32, verb: i32) -> i32 {
+    let mut program = program.clone();
+    program[1] = noun;
+    program[2] = verb;
+    let mut machine = Machine::new(program, vec![]);
+    machine.run();
+    machine.program()[0]
+}
+
 fn solve_for(program: &Vec<i32>, target: i32) -> (i32, i32) {
     for noun in 0..=99 {
         for verb in 0..=99 {
-            let mut program = program.clone();
-            program[1] = noun;
-            program[2] = verb;
-            let mut machine = Machine::new(program, vec![]);
-            machine.run();
-            if machine.program()[0] == target {
+            if run_with_noun_and_verb(program, noun, verb) == target {
                 return (noun, verb);
             }
         }
