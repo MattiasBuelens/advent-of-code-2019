@@ -1,8 +1,10 @@
 use std::cmp::max;
+use std::ops::DerefMut;
 
 fn main() {
     let input = parse_input();
-    println!("Answer to part 1: {}", part1(&input));
+    //    println!("Answer to part 1: {}", part1(&input));
+    println!("Answer to part 2: {}", part2(&input));
 }
 
 fn parse_input() -> Vec<i32> {
@@ -18,6 +20,7 @@ enum ParameterPosition {
     Pos2,
 }
 
+#[derive(Debug)]
 enum InputValue {
     Position(usize),
     Immediate(i32),
@@ -46,6 +49,7 @@ impl InputValue {
     }
 }
 
+#[derive(Debug)]
 struct OutputValue(usize);
 
 impl OutputValue {
@@ -55,6 +59,7 @@ impl OutputValue {
     }
 }
 
+#[derive(Debug)]
 enum Instruction {
     Add(InputValue, InputValue, OutputValue),
     Multiply(InputValue, InputValue, OutputValue),
@@ -67,6 +72,7 @@ enum Instruction {
     Halt,
 }
 
+#[derive(Debug, Copy, Clone)]
 enum StepResult {
     Ok,
     NeedInput,
@@ -178,16 +184,31 @@ impl Instruction {
     }
 }
 
-struct Machine {
+trait Machine {
+    fn add_input(&mut self, value: i32);
+    fn step(&mut self) -> StepResult;
+}
+
+impl Machine for Box<dyn Machine> {
+    fn add_input(&mut self, value: i32) {
+        self.deref_mut().add_input(value)
+    }
+
+    fn step(&mut self) -> StepResult {
+        self.deref_mut().step()
+    }
+}
+
+struct ProgramMachine {
     program: Vec<i32>,
     pc: usize,
     input: Vec<i32>,
     input_index: usize,
 }
 
-impl Machine {
-    fn new(program: Vec<i32>, input: &Vec<i32>) -> Machine {
-        Machine {
+impl ProgramMachine {
+    fn new(program: Vec<i32>, input: &Vec<i32>) -> ProgramMachine {
+        ProgramMachine {
             program,
             pc: 0usize,
             input: input.clone(),
@@ -209,21 +230,27 @@ impl Machine {
         }
         output
     }
+}
+
+impl Machine for ProgramMachine {
+    fn add_input(&mut self, value: i32) {
+        self.input.push(value);
+    }
 
     fn step(&mut self) -> StepResult {
         let instr = Instruction::parse(&self.program, self.pc);
         let result = instr.evaluate(&mut self.program, &self.input, &mut self.input_index);
         match result {
-            StepResult::NeedInput => {
-                // do not increment pc yet, so we can repeat instruction
+            StepResult::Ok | StepResult::Output(_) => {
+                self.pc += instr.length();
                 result
             }
             StepResult::Jump(jump) => {
                 self.pc = jump;
                 StepResult::Ok
             }
-            _ => {
-                self.pc += instr.length();
+            StepResult::NeedInput | StepResult::Halt => {
+                // program is paused, do not increment program counter
                 result
             }
         }
@@ -234,7 +261,7 @@ fn run_chain(program: &Vec<i32>, phase_settings: &Vec<i32>) -> i32 {
     let mut signal = 0;
     for phase_setting in phase_settings {
         let input = vec![*phase_setting, signal];
-        let output = Machine::new(program.clone(), &input).run();
+        let output = ProgramMachine::new(program.clone(), &input).run();
         assert_eq!(output.len(), 1, "expected exactly one output");
         signal = output[0];
     }
@@ -269,8 +296,101 @@ fn get_permutations(values: &Vec<i32>) -> Vec<Vec<i32>> {
 
 fn part1(input: &Vec<i32>) -> i32 {
     let mut max_signal = 0;
-    for perm in get_permutations(&(0..5).collect()) {
+    for perm in get_permutations(&(0..=4).collect()) {
         max_signal = max(max_signal, run_chain(input, &perm));
+    }
+    max_signal
+}
+
+struct Chain<M1: Machine, M2: Machine> {
+    head: M1,
+    tail: M2,
+}
+
+impl<M1: Machine, M2: Machine> Chain<M1, M2> {
+    fn new(head: M1, tail: M2) -> Chain<M1, M2> {
+        Chain { head, tail }
+    }
+}
+
+impl<M1: Machine, M2: Machine> Machine for Chain<M1, M2> {
+    fn add_input(&mut self, value: i32) {
+        self.head.add_input(value);
+    }
+
+    fn step(&mut self) -> StepResult {
+        let head_result = self.head.step();
+        let tail_result = self.tail.step();
+        match tail_result {
+            StepResult::Output(value) => {
+                // output from tail
+                tail_result
+            }
+            _ => match head_result {
+                StepResult::Output(value) => {
+                    // forward outputs from head to tail
+                    self.tail.add_input(value);
+                    StepResult::Ok
+                }
+                StepResult::Halt => {
+                    // keep running tail after head has halted
+                    tail_result
+                }
+                _ => head_result,
+            },
+        }
+    }
+}
+
+fn make_chain(mut machines: Vec<Box<dyn Machine>>) -> Box<dyn Machine> {
+    match machines.len() {
+        0 => panic!("no machines"),
+        1 => Box::new(machines.pop().unwrap()),
+        _ => {
+            let tail = machines.pop().unwrap();
+            Box::new(Chain::new(make_chain(machines), tail))
+        }
+    }
+}
+
+fn run_feedback_loop(program: &Vec<i32>, phase_settings: &Vec<i32>) -> i32 {
+    let machines: Vec<Box<dyn Machine>> = phase_settings
+        .iter()
+        .map(|setting| {
+            let machine = ProgramMachine::new(program.clone(), &vec![*setting]);
+            Box::new(machine) as Box<dyn Machine>
+        })
+        .collect();
+    let mut chain = make_chain(machines);
+    // To start the process, a 0 signal is sent to amplifier A's input exactly once.
+    chain.add_input(0);
+    let mut output = vec![];
+    loop {
+        let result = chain.step();
+        match chain.step() {
+            StepResult::NeedInput => {
+                // keep going
+            }
+            StepResult::Output(value) => {
+                chain.add_input(value);
+                output.push(value);
+            }
+            StepResult::Halt => {
+                break;
+            }
+            StepResult::Ok => {
+                // keep going
+            }
+            StepResult::Jump(_) => panic!("cannot happen"),
+        };
+    }
+    output.pop().unwrap()
+}
+
+fn part2(input: &Vec<i32>) -> i32 {
+    let mut max_signal = 0;
+    for perm in get_permutations(&(5..=9).collect()) {
+        max_signal = max(max_signal, run_feedback_loop(input, &perm));
     }
     max_signal
 }
