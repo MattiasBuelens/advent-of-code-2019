@@ -127,7 +127,8 @@ impl Instruction {
         &self,
         program: &mut Vec<i32>,
         pc: &mut usize,
-        input: &mut impl Iterator<Item = &'a i32>,
+        input: &Vec<i32>,
+        input_index: &mut usize,
         output: &mut Vec<i32>,
     ) -> bool {
         match self {
@@ -138,7 +139,9 @@ impl Instruction {
                 result.write(program, left.read(program) * right.read(program));
             }
             Instruction::Read(result) => {
-                result.write(program, *input.next().expect("missing input"));
+                let value = *input.get(*input_index).expect("missing input");
+                *input_index += 1;
+                result.write(program, value);
             }
             Instruction::Write(value) => {
                 output.push(value.read(program));
@@ -167,33 +170,63 @@ impl Instruction {
     }
 }
 
-fn run(program: &mut Vec<i32>, input: &Vec<i32>) -> Vec<i32> {
-    let mut input = input.iter();
-    let mut output = Vec::new();
-    let mut pc = 0usize; // program counter
-    loop {
-        let instr = Instruction::parse(program, pc);
-        pc += instr.length();
-        if instr.evaluate(program, &mut pc, &mut input, &mut output) {
-            break;
+struct Machine<'a> {
+    program: Vec<i32>,
+    pc: usize,
+    input: &'a Vec<i32>,
+    input_index: usize,
+    output: Vec<i32>,
+}
+
+impl<'a> Machine<'a> {
+    fn new(program: Vec<i32>, input: &'a Vec<i32>) -> Machine<'a> {
+        Machine {
+            program,
+            pc: 0usize,
+            input,
+            input_index: 0usize,
+            output: Vec::new(),
         }
     }
-    output
+
+    fn run(mut self) -> Vec<i32> {
+        loop {
+            if self.step() {
+                break;
+            }
+        }
+        self.output
+    }
+
+    fn step(&mut self) -> bool {
+        let instr = Instruction::parse(&self.program, self.pc);
+        self.pc += instr.length();
+        instr.evaluate(
+            &mut self.program,
+            &mut self.pc,
+            &self.input,
+            &mut self.input_index,
+            &mut self.output,
+        )
+    }
+}
+
+fn run(program: Vec<i32>, input: &Vec<i32>) -> Vec<i32> {
+    Machine::new(program, input).run()
 }
 
 fn run_chain(program: &Vec<i32>, phase_settings: &Vec<i32>) -> i32 {
     let mut signal = 0;
     for phase_setting in phase_settings {
-        let mut program = program.clone();
         let input = vec![*phase_setting, signal];
-        let output = run(&mut program, &input);
+        let output = run(program.clone(), &input);
         assert_eq!(output.len(), 1, "expected exactly one output");
         signal = output[0];
     }
     signal
 }
 
-fn get_permutations() -> Vec<Vec<i32>> {
+fn get_permutations(values: &Vec<i32>) -> Vec<Vec<i32>> {
     let mut perms = Vec::new();
     for i in 0..5 {
         for j in 0..5 {
@@ -204,7 +237,9 @@ fn get_permutations() -> Vec<Vec<i32>> {
                             if l != i && l != j && l != k {
                                 for m in 0..5 {
                                     if m != i && m != j && m != k && m != l {
-                                        perms.push(vec![i, j, k, l, m]);
+                                        perms.push(vec![
+                                            values[i], values[j], values[k], values[l], values[m],
+                                        ]);
                                     }
                                 }
                             }
@@ -219,7 +254,7 @@ fn get_permutations() -> Vec<Vec<i32>> {
 
 fn part1(input: &Vec<i32>) -> i32 {
     let mut max_signal = 0;
-    for perm in get_permutations() {
+    for perm in get_permutations(&(0..5).collect()) {
         max_signal = max(max_signal, run_chain(input, &perm));
     }
     max_signal
