@@ -10,7 +10,7 @@ fn main() {
 fn part1(program: &Vec<i32>) -> i32 {
     // The TEST diagnostic program will start by requesting from the user the ID of the system to
     // test by running an input instruction - provide it 1, the ID for the ship's air conditioner unit.
-    let mut output = run(program.clone(), vec![1]);
+    let mut output = Machine::new(program.clone(), vec![1]).run();
 
     let last_output = output.pop();
 
@@ -29,7 +29,7 @@ fn part1(program: &Vec<i32>) -> i32 {
 fn part2(program: &Vec<i32>) -> i32 {
     // This time, when the TEST diagnostic program runs its input instruction to get the ID
     // of the system to test, provide it 5, the ID for the ship's thermal radiator controller.
-    let output = run(program.clone(), vec![5]);
+    let output = Machine::new(program.clone(), vec![5]).run();
 
     // This diagnostic test suite only outputs one number, the diagnostic code.
     assert_eq!(output.len(), 1);
@@ -38,16 +38,12 @@ fn part2(program: &Vec<i32>) -> i32 {
     answer
 }
 
-fn run(program: Vec<i32>, input: Vec<i32>) -> Vec<i32> {
-    Machine::new(program, input).run()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_part1() {
-        assert_eq!(run(vec![1002, 4, 3, 4, 33], vec![]), vec!());
+        assert_eq!(Machine::new(vec![1002, 4, 3, 4, 33], vec![]).run(), vec!());
     }
 }
