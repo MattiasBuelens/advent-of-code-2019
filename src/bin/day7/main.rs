@@ -1,4 +1,5 @@
 use std::cmp::max;
+use std::collections::VecDeque;
 
 fn main() {
     let input = parse_input();
@@ -136,12 +137,7 @@ impl Instruction {
         }
     }
 
-    fn evaluate<'a>(
-        &self,
-        program: &mut Vec<i32>,
-        input: &Vec<i32>,
-        input_index: &mut usize,
-    ) -> StepResult {
+    fn evaluate<'a>(&self, program: &mut Vec<i32>, input: &mut VecDeque<i32>) -> StepResult {
         match self {
             Instruction::Add(left, right, result) => {
                 result.write(program, left.read(program) + right.read(program));
@@ -149,10 +145,9 @@ impl Instruction {
             Instruction::Multiply(left, right, result) => {
                 result.write(program, left.read(program) * right.read(program));
             }
-            Instruction::Read(result) => match input.get(*input_index) {
+            Instruction::Read(result) => match input.pop_front() {
                 Some(value) => {
-                    *input_index += 1;
-                    result.write(program, *value);
+                    result.write(program, value);
                 }
                 None => return StepResult::NeedInput,
             },
@@ -186,8 +181,7 @@ impl Instruction {
 struct ProgramMachine {
     program: Vec<i32>,
     pc: usize,
-    input: Vec<i32>,
-    input_index: usize,
+    input: VecDeque<i32>,
 }
 
 impl ProgramMachine {
@@ -195,8 +189,7 @@ impl ProgramMachine {
         ProgramMachine {
             program,
             pc: 0usize,
-            input: input.clone(),
-            input_index: 0usize,
+            input: VecDeque::from(input.clone()),
         }
     }
 
@@ -228,12 +221,12 @@ impl ProgramMachine {
     }
 
     fn add_input(&mut self, value: i32) {
-        self.input.push(value);
+        self.input.push_back(value);
     }
 
     fn step(&mut self) -> StepResult {
         let instr = Instruction::parse(&self.program, self.pc);
-        let result = instr.evaluate(&mut self.program, &self.input, &mut self.input_index);
+        let result = instr.evaluate(&mut self.program, &mut self.input);
         match result {
             StepResult::Ok | StepResult::Output(_) => {
                 self.pc += instr.length();
