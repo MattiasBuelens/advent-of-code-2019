@@ -11,7 +11,7 @@ fn part1(input: &Vec<i32>) -> i32 {
     let mut program = input.clone();
     program[1] = 12;
     program[2] = 2;
-    let mut machine = Machine::new(program, &vec![]);
+    let mut machine = Machine::new(program, vec![]);
     machine.run();
     machine.program()[0]
 }
@@ -27,7 +27,7 @@ fn solve_for(input: &Vec<i32>, target: i32) -> (i32, i32) {
             let mut program = input.clone();
             program[1] = noun;
             program[2] = verb;
-            let mut machine = Machine::new(program, &vec![]);
+            let mut machine = Machine::new(program, vec![]);
             machine.run();
             if machine.program()[0] == target {
                 return (noun, verb);
@@ -42,7 +42,7 @@ mod tests {
     use super::*;
 
     fn run_and_return(program: Vec<i32>) -> Vec<i32> {
-        let mut machine = Machine::new(program, &vec![]);
+        let mut machine = Machine::new(program, vec![]);
         machine.run();
         machine.program().clone()
     }

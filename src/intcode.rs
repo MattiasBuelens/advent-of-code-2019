@@ -159,11 +159,11 @@ pub struct Machine {
 }
 
 impl Machine {
-    pub fn new(program: Vec<i32>, input: &Vec<i32>) -> Machine {
+    pub fn new(program: Vec<i32>, input: Vec<i32>) -> Machine {
         Machine {
             program,
             pc: 0usize,
-            input: VecDeque::from(input.clone()),
+            input: VecDeque::from(input),
         }
     }
 
