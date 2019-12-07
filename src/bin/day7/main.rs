@@ -209,7 +209,7 @@ impl ProgramMachine {
     }
 
     fn run_to_output(&mut self, input: i32) -> Option<i32> {
-        self.add_input(input);
+        self.input.push_back(input);
         loop {
             match self.step() {
                 StepResult::NeedInput => panic!("missing input"),
@@ -218,10 +218,6 @@ impl ProgramMachine {
                 _ => {}
             };
         }
-    }
-
-    fn add_input(&mut self, value: i32) {
-        self.input.push_back(value);
     }
 
     fn step(&mut self) -> StepResult {
@@ -292,25 +288,22 @@ fn part1(input: &Vec<i32>) -> i32 {
 fn run_feedback_loop(program: &Vec<i32>, phase_settings: &Vec<i32>) -> i32 {
     let mut machines: Vec<ProgramMachine> = phase_settings
         .iter()
-        .map(|setting| {
-            ProgramMachine::new(program.clone(), &vec![*setting])
-        })
+        .map(|setting| ProgramMachine::new(program.clone(), &vec![*setting]))
         .collect();
     // To start the process, a 0 signal is sent to amplifier A's input exactly once.
     let mut signal = 0;
-    loop {
-        let mut halted = true;
+    'outer: loop {
         for machine in machines.iter_mut() {
             match machine.run_to_output(signal) {
                 Some(output) => {
                     signal = output;
-                    halted = false;
                 }
-                None => {}
+                None => {
+                    // If the first machine halts, all other machines must halt as well
+                    // since they can never get a new input.
+                    break 'outer;
+                }
             }
-        }
-        if halted {
-            break;
         }
     }
     signal
