@@ -94,26 +94,25 @@ mod tests {
 
     #[test]
     fn test_permutations() {
-        assert_eq!(get_permutations(vec![]), vec![
-            vec![],
-        ]);
-        assert_eq!(get_permutations(vec![1]), vec![
-            vec![1],
-        ]);
-        assert_eq!(get_permutations(vec![1, 2]), vec![
-            vec![1, 2],
-            vec![2, 1],
-        ]);
-        assert_eq!(get_permutations(vec![1, 2, 3]), vec![
-            vec![1, 2, 3],
-            vec![2, 1, 3],
-            vec![3, 1, 2],
-            vec![1, 3, 2],
-            vec![2, 3, 1],
-            vec![3, 2, 1],
-        ]);
+        assert_eq!(get_permutations(vec![]), vec![vec![],]);
+        assert_eq!(get_permutations(vec![1]), vec![vec![1],]);
+        assert_eq!(get_permutations(vec![1, 2]), vec![vec![1, 2], vec![2, 1],]);
+        assert_eq!(
+            get_permutations(vec![1, 2, 3]),
+            vec![
+                vec![1, 2, 3],
+                vec![2, 1, 3],
+                vec![3, 1, 2],
+                vec![1, 3, 2],
+                vec![2, 3, 1],
+                vec![3, 2, 1],
+            ]
+        );
         assert_eq!(get_permutations(vec![1, 2, 3, 4]).len(), 1 * 2 * 3 * 4);
-        assert_eq!(get_permutations(vec![1, 2, 3, 4, 5]).len(), 1 * 2 * 3 * 4 * 5);
+        assert_eq!(
+            get_permutations(vec![1, 2, 3, 4, 5]).len(),
+            1 * 2 * 3 * 4 * 5
+        );
     }
 
     #[test]
