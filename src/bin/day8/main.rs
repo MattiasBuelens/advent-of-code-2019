@@ -76,3 +76,19 @@ fn print_image(image: &Vec<Vec<Color>>) {
         println!("{}", line.iter().map(Color::print).collect::<String>())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(
+            part2(&parse_input("0222112222120000"), 2, 2),
+            vec![
+                vec![Color::BLACK, Color::WHITE],
+                vec![Color::WHITE, Color::BLACK]
+            ]
+        );
+    }
+}
