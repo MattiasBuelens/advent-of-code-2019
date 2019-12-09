@@ -2,36 +2,56 @@ use std::collections::VecDeque;
 
 #[derive(Debug)]
 enum InputValue {
-    Position(usize),
+    Position(i64),
     Immediate(i64),
+    Relative(i64),
 }
 
 impl InputValue {
     #[inline]
     fn parse(mode: i32, value: i64) -> InputValue {
         match mode {
-            0 => InputValue::Position(value as usize),
+            0 => InputValue::Position(value),
             1 => InputValue::Immediate(value),
+            2 => InputValue::Relative(value),
             _ => panic!("unexpected parameter mode {}", mode),
         }
     }
 
     #[inline]
-    fn read(&self, program: &Vec<i64>) -> i64 {
+    fn read(&self, program: &Vec<i64>, base: i64) -> i64 {
         match *self {
-            InputValue::Position(pos) => program[pos],
+            InputValue::Position(pos) => program[pos as usize],
             InputValue::Immediate(value) => value,
+            InputValue::Relative(pos) => program[(base + pos) as usize],
         }
     }
 }
 
 #[derive(Debug)]
-struct OutputValue(usize);
+enum OutputValue {
+    Position(i64),
+    Relative(i64),
+}
 
 impl OutputValue {
     #[inline]
-    fn write(&self, program: &mut Vec<i64>, value: i64) {
-        program[self.0] = value;
+    fn parse(mode: i32, value: i64) -> OutputValue {
+        match mode {
+            0 => OutputValue::Position(value),
+            2 => OutputValue::Relative(value),
+            _ => panic!("unexpected parameter mode {}", mode),
+        }
+    }
+
+    #[inline]
+    fn write(&self, program: &mut Vec<i64>, base: i64, value: i64) {
+        match *self {
+            OutputValue::Position(pos) => {
+                program[pos as usize] = value;
+            }
+            OutputValue::Relative(pos) => program[(base + pos) as usize] = value,
+        }
     }
 }
 
@@ -62,18 +82,19 @@ impl Instruction {
         let opcode = program[pc] as i32;
         let mode1 = (opcode / 100) % 10;
         let mode2 = (opcode / 1000) % 10;
+        let mode3 = (opcode / 10000) % 10;
         match opcode % 100 {
             1 => Instruction::Add(
                 InputValue::parse(mode1, program[pc + 1]),
                 InputValue::parse(mode2, program[pc + 2]),
-                OutputValue(program[pc + 3] as usize),
+                OutputValue::parse(mode3, program[pc + 3]),
             ),
             2 => Instruction::Multiply(
                 InputValue::parse(mode1, program[pc + 1]),
                 InputValue::parse(mode2, program[pc + 2]),
-                OutputValue(program[pc + 3] as usize),
+                OutputValue::parse(mode3, program[pc + 3]),
             ),
-            3 => Instruction::Read(OutputValue(program[pc + 1] as usize)),
+            3 => Instruction::Read(OutputValue::parse(mode1, program[pc + 1])),
             4 => Instruction::Write(InputValue::parse(mode1, program[pc + 1])),
             5 => Instruction::JumpIfTrue(
                 InputValue::parse(mode1, program[pc + 1]),
@@ -86,12 +107,12 @@ impl Instruction {
             7 => Instruction::LessThan(
                 InputValue::parse(mode1, program[pc + 1]),
                 InputValue::parse(mode2, program[pc + 2]),
-                OutputValue(program[pc + 3] as usize),
+                OutputValue::parse(mode3, program[pc + 3]),
             ),
             8 => Instruction::Equals(
                 InputValue::parse(mode1, program[pc + 1]),
                 InputValue::parse(mode2, program[pc + 2]),
-                OutputValue(program[pc + 3] as usize),
+                OutputValue::parse(mode3, program[pc + 3]),
             ),
             99 => Instruction::Halt,
             _ => panic!("unexpected opcode {} at index {}", opcode, pc),
@@ -111,40 +132,53 @@ impl Instruction {
         }
     }
 
-    fn evaluate(&self, program: &mut Vec<i64>, input: &mut VecDeque<i64>) -> StepResult {
+    fn evaluate(
+        &self,
+        program: &mut Vec<i64>,
+        input: &mut VecDeque<i64>,
+        base: &mut i64,
+    ) -> StepResult {
         match self {
             Instruction::Add(left, right, result) => {
-                result.write(program, left.read(program) + right.read(program));
+                result.write(
+                    program,
+                    *base,
+                    left.read(program, *base) + right.read(program, *base),
+                );
             }
             Instruction::Multiply(left, right, result) => {
-                result.write(program, left.read(program) * right.read(program));
+                result.write(
+                    program,
+                    *base,
+                    left.read(program, *base) * right.read(program, *base),
+                );
             }
             Instruction::Read(result) => match input.pop_front() {
                 Some(value) => {
-                    result.write(program, value);
+                    result.write(program, *base, value);
                 }
                 None => return StepResult::NeedInput,
             },
             Instruction::Write(value) => {
-                return StepResult::Output(value.read(program));
+                return StepResult::Output(value.read(program, *base));
             }
             Instruction::JumpIfTrue(test, jump) => {
-                if test.read(program) != 0 {
-                    return StepResult::Jump(jump.read(program) as usize);
+                if test.read(program, *base) != 0 {
+                    return StepResult::Jump(jump.read(program, *base) as usize);
                 }
             }
             Instruction::JumpIfFalse(test, jump) => {
-                if test.read(program) == 0 {
-                    return StepResult::Jump(jump.read(program) as usize);
+                if test.read(program, *base) == 0 {
+                    return StepResult::Jump(jump.read(program, *base) as usize);
                 }
             }
             Instruction::LessThan(left, right, result) => {
-                let test = left.read(program) < right.read(program);
-                result.write(program, if test { 1 } else { 0 });
+                let test = left.read(program, *base) < right.read(program, *base);
+                result.write(program, *base, if test { 1 } else { 0 });
             }
             Instruction::Equals(left, right, result) => {
-                let test = left.read(program) == right.read(program);
-                result.write(program, if test { 1 } else { 0 });
+                let test = left.read(program, *base) == right.read(program, *base);
+                result.write(program, *base, if test { 1 } else { 0 });
             }
             Instruction::Halt => return StepResult::Halt,
         }
@@ -155,6 +189,7 @@ impl Instruction {
 pub struct Machine {
     program: Vec<i64>,
     pc: usize,
+    base: i64,
     input: VecDeque<i64>,
 }
 
@@ -162,7 +197,8 @@ impl Machine {
     pub fn new(program: Vec<i64>, input: Vec<i64>) -> Machine {
         Machine {
             program,
-            pc: 0usize,
+            pc: 0,
+            base: 0,
             input: VecDeque::from(input),
         }
     }
@@ -199,7 +235,7 @@ impl Machine {
 
     fn step(&mut self) -> StepResult {
         let instr = Instruction::parse(&self.program, self.pc);
-        let result = instr.evaluate(&mut self.program, &mut self.input);
+        let result = instr.evaluate(&mut self.program, &mut self.input, &mut self.base);
         match result {
             StepResult::Ok | StepResult::Output(_) => {
                 self.pc += instr.length();
