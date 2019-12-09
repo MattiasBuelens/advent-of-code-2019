@@ -21,9 +21,9 @@ impl InputValue {
     #[inline]
     fn read(&self, program: &Vec<i64>, base: i64) -> i64 {
         match *self {
-            InputValue::Position(pos) => program[pos as usize],
+            InputValue::Position(pos) => *program.get(pos as usize).unwrap_or(&0),
             InputValue::Immediate(value) => value,
-            InputValue::Relative(pos) => program[(base + pos) as usize],
+            InputValue::Relative(pos) => *program.get((base + pos) as usize).unwrap_or(&0),
         }
     }
 }
