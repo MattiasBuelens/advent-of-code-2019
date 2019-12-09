@@ -46,12 +46,14 @@ impl OutputValue {
 
     #[inline]
     fn write(&self, program: &mut Vec<i64>, base: i64, value: i64) {
-        match *self {
-            OutputValue::Position(pos) => {
-                program[pos as usize] = value;
-            }
-            OutputValue::Relative(pos) => program[(base + pos) as usize] = value,
+        let pos = match *self {
+            OutputValue::Position(pos) => pos as usize,
+            OutputValue::Relative(pos) => (base + pos) as usize,
+        };
+        if pos >= program.len() {
+            program.resize(pos + 1, 0);
         }
+        program[pos as usize] = value;
     }
 }
 
