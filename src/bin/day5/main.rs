@@ -2,12 +2,12 @@ use advent_of_code_2019::input::parse_list;
 use advent_of_code_2019::intcode::Machine;
 
 fn main() {
-    let input: Vec<i32> = parse_list(include_str!("input"), ',');
+    let input: Vec<i64> = parse_list(include_str!("input"), ',');
     println!("Answer to part 1: {}", part1(&input));
     println!("Answer to part 2: {}", part2(&input));
 }
 
-fn part1(program: &Vec<i32>) -> i32 {
+fn part1(program: &Vec<i64>) -> i64 {
     // The TEST diagnostic program will start by requesting from the user the ID of the system to
     // test by running an input instruction - provide it 1, the ID for the ship's air conditioner unit.
     let mut output = Machine::new(program.clone(), vec![1]).run();
@@ -26,7 +26,7 @@ fn part1(program: &Vec<i32>) -> i32 {
     answer
 }
 
-fn part2(program: &Vec<i32>) -> i32 {
+fn part2(program: &Vec<i64>) -> i64 {
     // This time, when the TEST diagnostic program runs its input instruction to get the ID
     // of the system to test, provide it 5, the ID for the ship's thermal radiator controller.
     let output = Machine::new(program.clone(), vec![5]).run();

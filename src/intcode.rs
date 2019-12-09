@@ -3,12 +3,12 @@ use std::collections::VecDeque;
 #[derive(Debug)]
 enum InputValue {
     Position(usize),
-    Immediate(i32),
+    Immediate(i64),
 }
 
 impl InputValue {
     #[inline]
-    fn parse(mode: i32, value: i32) -> InputValue {
+    fn parse(mode: i32, value: i64) -> InputValue {
         match mode {
             0 => InputValue::Position(value as usize),
             1 => InputValue::Immediate(value),
@@ -17,7 +17,7 @@ impl InputValue {
     }
 
     #[inline]
-    fn read(&self, program: &Vec<i32>) -> i32 {
+    fn read(&self, program: &Vec<i64>) -> i64 {
         match *self {
             InputValue::Position(pos) => program[pos],
             InputValue::Immediate(value) => value,
@@ -30,7 +30,7 @@ struct OutputValue(usize);
 
 impl OutputValue {
     #[inline]
-    fn write(&self, program: &mut Vec<i32>, value: i32) {
+    fn write(&self, program: &mut Vec<i64>, value: i64) {
         program[self.0] = value;
     }
 }
@@ -53,13 +53,13 @@ pub enum StepResult {
     Ok,
     NeedInput,
     Jump(usize),
-    Output(i32),
+    Output(i64),
     Halt,
 }
 
 impl Instruction {
-    fn parse(program: &Vec<i32>, pc: usize) -> Instruction {
-        let opcode = program[pc];
+    fn parse(program: &Vec<i64>, pc: usize) -> Instruction {
+        let opcode = program[pc] as i32;
         let mode1 = (opcode / 100) % 10;
         let mode2 = (opcode / 1000) % 10;
         match opcode % 100 {
@@ -111,7 +111,7 @@ impl Instruction {
         }
     }
 
-    fn evaluate(&self, program: &mut Vec<i32>, input: &mut VecDeque<i32>) -> StepResult {
+    fn evaluate(&self, program: &mut Vec<i64>, input: &mut VecDeque<i64>) -> StepResult {
         match self {
             Instruction::Add(left, right, result) => {
                 result.write(program, left.read(program) + right.read(program));
@@ -153,13 +153,13 @@ impl Instruction {
 }
 
 pub struct Machine {
-    program: Vec<i32>,
+    program: Vec<i64>,
     pc: usize,
-    input: VecDeque<i32>,
+    input: VecDeque<i64>,
 }
 
 impl Machine {
-    pub fn new(program: Vec<i32>, input: Vec<i32>) -> Machine {
+    pub fn new(program: Vec<i64>, input: Vec<i64>) -> Machine {
         Machine {
             program,
             pc: 0usize,
@@ -167,15 +167,15 @@ impl Machine {
         }
     }
 
-    pub fn program(&self) -> &Vec<i32> {
+    pub fn program(&self) -> &Vec<i64> {
         &self.program
     }
 
-    pub fn add_input(&mut self, input: i32) {
+    pub fn add_input(&mut self, input: i64) {
         self.input.push_back(input);
     }
 
-    pub fn run(&mut self) -> Vec<i32> {
+    pub fn run(&mut self) -> Vec<i64> {
         let mut output = Vec::new();
         loop {
             match self.run_to_output() {
@@ -186,7 +186,7 @@ impl Machine {
         output
     }
 
-    pub fn run_to_output(&mut self) -> Option<i32> {
+    pub fn run_to_output(&mut self) -> Option<i64> {
         loop {
             match self.step() {
                 StepResult::NeedInput => panic!("missing input"),

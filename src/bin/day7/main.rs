@@ -6,12 +6,12 @@ use advent_of_code_2019::input::parse_list;
 use advent_of_code_2019::intcode::*;
 
 fn main() {
-    let input: Vec<i32> = parse_list(include_str!("input"), ',');
+    let input: Vec<i64> = parse_list(include_str!("input"), ',');
     println!("Answer to part 1: {}", part1(&input));
     println!("Answer to part 2: {}", part2(&input));
 }
 
-fn run_chain(program: &Vec<i32>, phase_settings: &Vec<i32>) -> i32 {
+fn run_chain(program: &Vec<i64>, phase_settings: &Vec<i64>) -> i64 {
     let mut signal = 0;
     for phase_setting in phase_settings {
         let mut machine = Machine::new(program.clone(), vec![*phase_setting]);
@@ -22,16 +22,16 @@ fn run_chain(program: &Vec<i32>, phase_settings: &Vec<i32>) -> i32 {
     signal
 }
 
-fn part1(program: &Vec<i32>) -> i32 {
+fn part1(program: &Vec<i64>) -> i64 {
     let mut max_signal = 0;
-    let mut settings: Vec<i32> = (0..=4).collect();
+    let mut settings: Vec<i64> = (0..=4).collect();
     for permutation in Heap::new(&mut settings) {
         max_signal = max(max_signal, run_chain(program, &permutation));
     }
     max_signal
 }
 
-fn run_feedback_loop(program: &Vec<i32>, phase_settings: &Vec<i32>) -> i32 {
+fn run_feedback_loop(program: &Vec<i64>, phase_settings: &Vec<i64>) -> i64 {
     let mut machines: Vec<Machine> = phase_settings
         .iter()
         .map(|setting| Machine::new(program.clone(), vec![*setting]))
@@ -56,9 +56,9 @@ fn run_feedback_loop(program: &Vec<i32>, phase_settings: &Vec<i32>) -> i32 {
     signal
 }
 
-fn part2(program: &Vec<i32>) -> i32 {
+fn part2(program: &Vec<i64>) -> i64 {
     let mut max_signal = 0;
-    let mut settings: Vec<i32> = (5..=9).collect();
+    let mut settings: Vec<i64> = (5..=9).collect();
     for permutation in Heap::new(&mut settings) {
         max_signal = max(max_signal, run_feedback_loop(program, &permutation));
     }
