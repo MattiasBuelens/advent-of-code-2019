@@ -65,6 +65,7 @@ enum Instruction {
     JumpIfFalse(InputValue, InputValue),
     LessThan(InputValue, InputValue, OutputValue),
     Equals(InputValue, InputValue, OutputValue),
+    RelativeBaseOffset(InputValue),
     Halt,
 }
 
@@ -114,6 +115,7 @@ impl Instruction {
                 InputValue::parse(mode2, program[pc + 2]),
                 OutputValue::parse(mode3, program[pc + 3]),
             ),
+            9 => Instruction::RelativeBaseOffset(InputValue::parse(mode1, program[pc + 1])),
             99 => Instruction::Halt,
             _ => panic!("unexpected opcode {} at index {}", opcode, pc),
         }
@@ -127,7 +129,7 @@ impl Instruction {
             | Instruction::LessThan(_, _, _)
             | Instruction::Equals(_, _, _) => 4,
             Instruction::JumpIfTrue(_, _) | Instruction::JumpIfFalse(_, _) => 3,
-            Instruction::Read(_) | Instruction::Write(_) => 2,
+            Instruction::Read(_) | Instruction::Write(_) | Instruction::RelativeBaseOffset(_) => 2,
             Instruction::Halt => 1,
         }
     }
@@ -179,6 +181,9 @@ impl Instruction {
             Instruction::Equals(left, right, result) => {
                 let test = left.read(program, *base) == right.read(program, *base);
                 result.write(program, *base, if test { 1 } else { 0 });
+            }
+            Instruction::RelativeBaseOffset(offset) => {
+                *base += offset.read(program, *base);
             }
             Instruction::Halt => return StepResult::Halt,
         }
