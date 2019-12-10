@@ -1,4 +1,5 @@
 use std::cmp::max;
+use std::collections::VecDeque;
 
 use permutohedron::Heap;
 
@@ -14,7 +15,7 @@ fn main() {
 fn run_chain(program: &Vec<i64>, phase_settings: &Vec<i64>) -> i64 {
     let mut signal = 0;
     for phase_setting in phase_settings {
-        let mut machine = Machine::new(program.clone(), vec![*phase_setting]);
+        let mut machine = ProgramMachine::new(program.clone(), vec![*phase_setting]);
         machine.add_input(signal);
         let output = machine.run_to_output();
         signal = output.expect("expected an output");
@@ -32,27 +33,35 @@ fn part1(program: &Vec<i64>) -> i64 {
 }
 
 fn run_feedback_loop(program: &Vec<i64>, phase_settings: &Vec<i64>) -> i64 {
-    let mut machines: Vec<Machine> = phase_settings
+    let machines: Vec<Box<dyn Machine>> = phase_settings
         .iter()
-        .map(|setting| Machine::new(program.clone(), vec![*setting]))
+        .map(|setting| {
+            let machine = ProgramMachine::new(program.clone(), vec![*setting]);
+            Box::new(machine) as Box<dyn Machine>
+        })
         .collect();
+    let mut chain = make_chain(VecDeque::from(machines));
+
     // To start the process, a 0 signal is sent to amplifier A's input exactly once.
     let mut signal = 0;
-    'outer: loop {
-        for machine in machines.iter_mut() {
-            machine.add_input(signal);
-            match machine.run_to_output() {
-                Some(output) => {
-                    signal = output;
-                }
-                None => {
-                    // If the first machine halts, all other machines must halt as well
-                    // since they can never get a new input.
-                    break 'outer;
-                }
+    chain.add_input(signal);
+
+    loop {
+        match chain.step() {
+            StepResult::Ok | StepResult::NeedInput => {
+                // keep going
             }
-        }
+            StepResult::Output(value) => {
+                chain.add_input(value);
+                signal = value;
+            }
+            StepResult::Halt => {
+                break;
+            }
+            StepResult::Jump(_) => panic!("cannot happen"),
+        };
     }
+
     signal
 }
 
