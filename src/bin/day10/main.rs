@@ -37,7 +37,7 @@ fn part1(grid: &Grid) -> usize {
 fn get_visible_asteroids(center: &Position, grid: &Grid) -> HashSet<Position> {
     let center = *center;
     let mut visible: HashSet<Position> = HashSet::new();
-    'outer: for other in grid {
+    for other in grid {
         let other = *other;
         if center == other {
             continue;
@@ -46,14 +46,10 @@ fn get_visible_asteroids(center: &Position, grid: &Grid) -> HashSet<Position> {
         let div = gcd(delta.x, delta.y);
         let step = Position::new(delta.x / div, delta.y / div);
         let mut pos = center + step;
-        while pos != other {
-            if grid.contains(&pos) {
-                visible.insert(pos);
-                continue 'outer;
-            }
+        while !grid.contains(&pos) {
             pos += step;
         }
-        visible.insert(other);
+        visible.insert(pos);
     }
     visible
 }
