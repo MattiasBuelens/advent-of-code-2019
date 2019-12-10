@@ -1,5 +1,5 @@
 use advent_of_code_2019::input::parse_list;
-use advent_of_code_2019::intcode::Machine;
+use advent_of_code_2019::intcode::ProgramMachine;
 
 fn main() {
     let input: Vec<i64> = parse_list(include_str!("input"), ',');
@@ -20,7 +20,7 @@ fn run_with_noun_and_verb(program: &Vec<i64>, noun: i64, verb: i64) -> i64 {
     let mut program = program.clone();
     program[1] = noun;
     program[2] = verb;
-    let mut machine = Machine::new(program, vec![]);
+    let mut machine = ProgramMachine::new(program, vec![]);
     machine.run();
     machine.program()[0]
 }
@@ -41,7 +41,7 @@ mod tests {
     use super::*;
 
     fn run_and_return(program: Vec<i64>) -> Vec<i64> {
-        let mut machine = Machine::new(program, vec![]);
+        let mut machine = ProgramMachine::new(program, vec![]);
         machine.run();
         machine.program().clone()
     }

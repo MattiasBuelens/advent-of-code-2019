@@ -193,16 +193,16 @@ impl Instruction {
     }
 }
 
-pub struct Machine {
+pub struct ProgramMachine {
     program: Vec<i64>,
     pc: usize,
     base: i64,
     input: VecDeque<i64>,
 }
 
-impl Machine {
-    pub fn new(program: Vec<i64>, input: Vec<i64>) -> Machine {
-        Machine {
+impl ProgramMachine {
+    pub fn new(program: Vec<i64>, input: Vec<i64>) -> ProgramMachine {
+        ProgramMachine {
             program,
             pc: 0,
             base: 0,
