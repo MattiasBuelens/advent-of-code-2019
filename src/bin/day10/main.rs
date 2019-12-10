@@ -92,7 +92,7 @@ fn get_visible_asteroids(center: &Position, grid: &Grid) -> HashSet<Position> {
             }
             pos += step;
         }
-        visible.insert(other.clone());
+        visible.insert(other);
     }
     visible
 }
@@ -119,6 +119,7 @@ fn part2(grid: &Grid) -> i32 {
             .iter()
             .cloned()
             .collect();
+        assert!(!targets.is_empty(), "ran out of targets");
         targets.sort_by(|a, b| {
             get_angle(&station, a)
                 .partial_cmp(&get_angle(&station, b))
@@ -138,8 +139,8 @@ fn get_angle(station: &Position, pos: &Position) -> f64 {
     let x = (pos.x - station.x) as f64;
     let y = (pos.y - station.y) as f64;
     let angle = x.atan2(-y);
-    if angle < 0f64 {
-        angle + (2f64 * PI)
+    if angle < 0.0 {
+        angle + (2.0 * PI)
     } else {
         angle
     }
@@ -154,7 +155,7 @@ mod tests {
     #[test]
     fn test_get_angle() {
         let zero = Position::new(0, 0);
-        assert_eq!(get_angle(&zero, &(Position::new(0, -1))), 0f64);
+        assert_eq!(get_angle(&zero, &(Position::new(0, -1))), 0.0);
         assert_eq!(get_angle(&zero, &(Position::new(1, 0))), FRAC_PI_2);
         assert_eq!(get_angle(&zero, &(Position::new(0, 1))), PI);
         assert_eq!(get_angle(&zero, &(Position::new(-1, 0))), PI + FRAC_PI_2);
