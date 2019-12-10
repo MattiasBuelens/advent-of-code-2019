@@ -47,9 +47,8 @@ fn run_feedback_loop(program: &Vec<i64>, phase_settings: &Vec<i64>) -> i64 {
     chain.add_input(signal);
 
     loop {
-        let result = chain.step();
         match chain.step() {
-            StepResult::NeedInput => {
+            StepResult::Ok | StepResult::NeedInput => {
                 // keep going
             }
             StepResult::Output(value) => {
@@ -58,9 +57,6 @@ fn run_feedback_loop(program: &Vec<i64>, phase_settings: &Vec<i64>) -> i64 {
             }
             StepResult::Halt => {
                 break;
-            }
-            StepResult::Ok => {
-                // keep going
             }
             StepResult::Jump(_) => panic!("cannot happen"),
         };

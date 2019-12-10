@@ -295,27 +295,32 @@ impl<M1: Machine, M2: Machine> Machine for Chain<M1, M2> {
     }
 
     fn step(&mut self) -> StepResult {
-        let head_result = match self.head.step() {
-            StepResult::Output(value) => {
-                // forward outputs from head to tail
-                self.tail.add_input(value);
-                StepResult::Ok
-            }
-            res => res,
-        };
-        match self.tail.step() {
-            StepResult::Output(value) => {
+        let head_result = self.head.step();
+        if let StepResult::Output(value) = head_result {
+            // forward outputs from head to tail
+            self.tail.add_input(value);
+        }
+        let tail_result = self.tail.step();
+        match (head_result, tail_result) {
+            (_, StepResult::Output(value)) => {
                 // output from tail
                 StepResult::Output(value)
             }
-            StepResult::Halt => StepResult::Halt,
-            _ => {
-                // continue running tail if head halts
-                match head_result {
-                    StepResult::Halt => StepResult::Ok,
-                    res => res,
-                }
+            (_, StepResult::Halt) => {
+                // if tail has halted, then head must have halted as well
+                // since it can no longer output values
+                StepResult::Halt
             }
+            (StepResult::Halt, _) => {
+                // if head has halted but tail hasn't yet,
+                // continue running tail
+                StepResult::Ok
+            }
+            (StepResult::Output(_), _) => {
+                // output from head was already forwarded internally
+                StepResult::Ok
+            }
+            (head_result, _) => head_result,
         }
     }
 }
