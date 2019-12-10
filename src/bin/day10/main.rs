@@ -1,51 +1,12 @@
 use std::collections::HashSet;
 use std::f64::consts::PI;
-use std::ops::{Add, AddAssign, Sub};
+
+use advent_of_code_2019::position::Position;
 
 fn main() {
     let grid: Grid = parse_input(include_str!("input"));
     println!("Answer to part 1: {}", part1(&grid));
     println!("Answer to part 2: {}", part2(&grid));
-}
-
-#[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
-struct Position {
-    x: i32,
-    y: i32,
-}
-
-impl Position {
-    fn new(x: i32, y: i32) -> Position {
-        Position { x, y }
-    }
-}
-
-impl Add for Position {
-    type Output = Self;
-
-    fn add(self: Position, other: Position) -> Position {
-        Position {
-            x: self.x + other.x,
-            y: self.y + other.y,
-        }
-    }
-}
-
-impl Sub for Position {
-    type Output = Self;
-
-    fn sub(self: Position, other: Position) -> Position {
-        Position {
-            x: self.x - other.x,
-            y: self.y - other.y,
-        }
-    }
-}
-
-impl AddAssign for Position {
-    fn add_assign(&mut self, other: Self) {
-        *self = *self + other;
-    }
 }
 
 type Grid = HashSet<Position>;
