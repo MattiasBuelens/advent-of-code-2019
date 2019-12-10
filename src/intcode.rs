@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+use std::ops::DerefMut;
 
 #[derive(Debug)]
 enum InputValue {
@@ -220,6 +221,16 @@ pub trait Machine {
     }
 }
 
+impl<T: DerefMut<Target = dyn Machine>> Machine for T {
+    fn add_input(&mut self, value: i64) {
+        self.deref_mut().add_input(value)
+    }
+
+    fn step(&mut self) -> StepResult {
+        self.deref_mut().step()
+    }
+}
+
 pub struct ProgramMachine {
     program: Vec<i64>,
     pc: usize,
@@ -263,6 +274,60 @@ impl Machine for ProgramMachine {
                 // program is paused, do not increment program counter
                 result
             }
+        }
+    }
+}
+
+struct Chain<M1: Machine, M2: Machine> {
+    head: M1,
+    tail: M2,
+}
+
+impl<M1: Machine, M2: Machine> Chain<M1, M2> {
+    fn new(head: M1, tail: M2) -> Chain<M1, M2> {
+        Chain { head, tail }
+    }
+}
+
+impl<M1: Machine, M2: Machine> Machine for Chain<M1, M2> {
+    fn add_input(&mut self, value: i64) {
+        self.head.add_input(value);
+    }
+
+    fn step(&mut self) -> StepResult {
+        let head_result = self.head.step();
+        if let StepResult::Output(value) = head_result {
+            // forward outputs from head to tail
+            self.tail.add_input(value);
+        }
+        let tail_result = self.tail.step();
+        match tail_result {
+            StepResult::Output(value) => {
+                // output from tail
+                tail_result
+            }
+            _ => match head_result {
+                StepResult::Output(value) => {
+                    // output has been forwarded to tail
+                    StepResult::Ok
+                }
+                StepResult::Halt => {
+                    // keep running tail after head has halted
+                    tail_result
+                }
+                _ => head_result,
+            },
+        }
+    }
+}
+
+pub fn make_chain(mut machines: VecDeque<Box<dyn Machine>>) -> Box<dyn Machine> {
+    match machines.len() {
+        0 => panic!("no machines"),
+        1 => Box::new(machines.pop_front().unwrap()),
+        _ => {
+            let head = machines.pop_front().unwrap();
+            Box::new(Chain::new(head, make_chain(machines)))
         }
     }
 }
