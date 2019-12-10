@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 use std::f64::consts::PI;
+use std::ops::{Add, AddAssign, Sub};
 
 fn main() {
     let grid: Grid = parse_input(include_str!("input"));
@@ -13,6 +14,40 @@ struct Position {
     y: i32,
 }
 
+impl Position {
+    fn new(x: i32, y: i32) -> Position {
+        Position { x, y }
+    }
+}
+
+impl Add for Position {
+    type Output = Self;
+
+    fn add(self: Position, other: Position) -> Position {
+        Position {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+}
+
+impl Sub for Position {
+    type Output = Self;
+
+    fn sub(self: Position, other: Position) -> Position {
+        Position {
+            x: self.x - other.x,
+            y: self.y - other.y,
+        }
+    }
+}
+
+impl AddAssign for Position {
+    fn add_assign(&mut self, other: Self) {
+        *self = *self + other;
+    }
+}
+
 type Grid = HashSet<Position>;
 
 fn parse_input(input: &str) -> Grid {
@@ -22,7 +57,7 @@ fn parse_input(input: &str) -> Grid {
         let mut x = 0;
         for cell in line.chars() {
             if cell == '#' {
-                grid.insert(Position { x, y });
+                grid.insert(Position::new(x, y));
             }
             x += 1;
         }
@@ -39,26 +74,23 @@ fn part1(grid: &Grid) -> usize {
 }
 
 fn get_visible_asteroids(center: &Position, grid: &Grid) -> HashSet<Position> {
+    let center = *center;
     let mut visible: HashSet<Position> = HashSet::new();
     'outer: for other in grid {
+        let other = *other;
         if center == other {
             continue;
         }
-        let dx = other.x - center.x;
-        let dy = other.y - center.y;
-        let div = gcd(dx, dy);
-        let step_x = dx / div;
-        let step_y = dy / div;
-        let mut x = center.x + step_x;
-        let mut y = center.y + step_y;
-        while x != other.x || y != other.y {
-            let pos = Position { x, y };
+        let delta = other - center;
+        let div = gcd(delta.x, delta.y);
+        let step = Position::new(delta.x / div, delta.y / div);
+        let mut pos = center + step;
+        while pos != other {
             if grid.contains(&pos) {
                 visible.insert(pos);
                 continue 'outer;
             }
-            x += step_x;
-            y += step_y;
+            pos += step;
         }
         visible.insert(other.clone());
     }
@@ -121,14 +153,11 @@ mod tests {
 
     #[test]
     fn test_get_angle() {
-        let zero = Position { x: 0, y: 0 };
-        assert_eq!(get_angle(&zero, &(Position { x: 0, y: -1 })), 0f64);
-        assert_eq!(get_angle(&zero, &(Position { x: 1, y: 0 })), FRAC_PI_2);
-        assert_eq!(get_angle(&zero, &(Position { x: 0, y: 1 })), PI);
-        assert_eq!(
-            get_angle(&zero, &(Position { x: -1, y: 0 })),
-            PI + FRAC_PI_2
-        );
+        let zero = Position::new(0, 0);
+        assert_eq!(get_angle(&zero, &(Position::new(0, -1))), 0f64);
+        assert_eq!(get_angle(&zero, &(Position::new(1, 0))), FRAC_PI_2);
+        assert_eq!(get_angle(&zero, &(Position::new(0, 1))), PI);
+        assert_eq!(get_angle(&zero, &(Position::new(-1, 0))), PI + FRAC_PI_2);
     }
 
     #[test]
