@@ -120,6 +120,15 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        // TODO
+        assert_eq!(part1(&parse_input(include_str!("example1"))), 8);
+        assert_eq!(part1(&parse_input(include_str!("example2"))), 33);
+        assert_eq!(part1(&parse_input(include_str!("example3"))), 35);
+        assert_eq!(part1(&parse_input(include_str!("example4"))), 41);
+        assert_eq!(part1(&parse_input(include_str!("example5"))), 210);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(&parse_input(include_str!("example5"))), 802);
     }
 }
