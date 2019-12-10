@@ -1,5 +1,5 @@
 use std::cmp::Ordering;
-use std::ops::{Add, AddAssign, Sub};
+use std::ops::{Add, AddAssign, Sub, SubAssign};
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
 pub struct Position {
@@ -22,6 +22,12 @@ impl Position {
 
     pub fn compare_by_manhattan_distance(&self, other: &Position) -> Ordering {
         self.manhattan_distance().cmp(&other.manhattan_distance())
+    }
+}
+
+impl Default for Position {
+    fn default() -> Self {
+        Position::zero()
     }
 }
 
@@ -49,6 +55,14 @@ impl Sub for Position {
 
 impl AddAssign for Position {
     fn add_assign(&mut self, other: Self) {
-        *self = *self + other;
+        self.x.add_assign(other.x);
+        self.y.add_assign(other.y);
+    }
+}
+
+impl SubAssign for Position {
+    fn sub_assign(&mut self, other: Self) {
+        self.x.sub_assign(other.x);
+        self.y.sub_assign(other.y);
     }
 }
