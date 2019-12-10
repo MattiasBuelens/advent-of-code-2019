@@ -193,6 +193,33 @@ impl Instruction {
     }
 }
 
+pub trait Machine {
+    fn add_input(&mut self, value: i64);
+    fn step(&mut self) -> StepResult;
+
+    fn run(&mut self) -> Vec<i64> {
+        let mut output = Vec::new();
+        loop {
+            match self.run_to_output() {
+                Some(value) => output.push(value),
+                None => break,
+            };
+        }
+        output
+    }
+
+    fn run_to_output(&mut self) -> Option<i64> {
+        loop {
+            match self.step() {
+                StepResult::NeedInput => panic!("missing input"),
+                StepResult::Output(value) => return Some(value),
+                StepResult::Halt => return None,
+                _ => {}
+            };
+        }
+    }
+}
+
 pub struct ProgramMachine {
     program: Vec<i64>,
     pc: usize,
@@ -213,31 +240,11 @@ impl ProgramMachine {
     pub fn program(&self) -> &Vec<i64> {
         &self.program
     }
+}
 
-    pub fn add_input(&mut self, input: i64) {
+impl Machine for ProgramMachine {
+    fn add_input(&mut self, input: i64) {
         self.input.push_back(input);
-    }
-
-    pub fn run(&mut self) -> Vec<i64> {
-        let mut output = Vec::new();
-        loop {
-            match self.run_to_output() {
-                Some(value) => output.push(value),
-                None => break,
-            };
-        }
-        output
-    }
-
-    pub fn run_to_output(&mut self) -> Option<i64> {
-        loop {
-            match self.step() {
-                StepResult::NeedInput => panic!("missing input"),
-                StepResult::Output(value) => return Some(value),
-                StepResult::Halt => return None,
-                _ => {}
-            };
-        }
     }
 
     fn step(&mut self) -> StepResult {

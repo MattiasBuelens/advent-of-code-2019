@@ -1,5 +1,5 @@
 use advent_of_code_2019::input::parse_list;
-use advent_of_code_2019::intcode::ProgramMachine;
+use advent_of_code_2019::intcode::*;
 
 fn main() {
     let input: Vec<i64> = parse_list(include_str!("input"), ',');
