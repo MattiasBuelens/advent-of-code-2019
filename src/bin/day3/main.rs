@@ -1,10 +1,10 @@
-use std::cmp::Ordering;
 use std::collections::hash_map::RandomState;
 use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::str::FromStr;
 
 use advent_of_code_2019::input::parse_list;
+use advent_of_code_2019::position::Position;
 
 fn main() {
     let paths: Vec<Path> = parse_list(include_str!("input"), '\n');
@@ -56,41 +56,22 @@ fn steps_to_reach(pos: &Position, trace: &Vec<Position>) -> usize {
 }
 
 #[derive(Debug, Eq, PartialEq, Hash, Copy, Clone)]
-struct Position {
-    x: i32,
-    y: i32,
-}
-
-impl Position {
-    fn zero() -> Position {
-        Position { x: 0, y: 0 }
-    }
-
-    fn manhattan_distance(&self) -> i32 {
-        self.x.abs() + self.y.abs()
-    }
-
-    fn compare_by_manhattan_distance(&self, other: &Position) -> Ordering {
-        self.manhattan_distance().cmp(&other.manhattan_distance())
-    }
-
-    fn step(&self, dir: Direction) -> Position {
-        let Position { x, y } = *self;
-        match dir {
-            Direction::Up => Position { x, y: y + 1 },
-            Direction::Down => Position { x, y: y - 1 },
-            Direction::Left => Position { x: x - 1, y },
-            Direction::Right => Position { x: x + 1, y },
-        }
-    }
-}
-
-#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone)]
 enum Direction {
     Up,
     Down,
     Left,
     Right,
+}
+
+impl Direction {
+    fn step(&self) -> Position {
+        match *self {
+            Direction::Up => Position { x: 0, y: 1 },
+            Direction::Down => Position { x: 0, y: -1 },
+            Direction::Left => Position { x: -1, y: 0 },
+            Direction::Right => Position { x: 1, y: 0 },
+        }
+    }
 }
 
 impl FromStr for Direction {
@@ -146,7 +127,7 @@ impl Path {
         let mut pos = Position::zero();
         for mv in &self.moves {
             for _ in 0..mv.steps {
-                pos = pos.step(mv.direction);
+                pos += mv.direction.step();
                 trace.push(pos);
             }
         }
