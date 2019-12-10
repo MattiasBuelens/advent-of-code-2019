@@ -1,8 +1,10 @@
 use std::collections::HashSet;
+use std::f64::consts::PI;
 
 fn main() {
-    let input: Grid = parse_input(include_str!("input"));
-    println!("Answer to part 1: {}", part1(&input));
+    let grid: Grid = parse_input(include_str!("input"));
+    println!("Answer to part 1: {}", part1(&grid));
+    println!("Answer to part 2: {}", part2(&grid));
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
@@ -29,10 +31,9 @@ fn parse_input(input: &str) -> Grid {
     grid
 }
 
-fn part1(input: &Grid) -> usize {
-    input
-        .iter()
-        .map(|pos| get_visible_asteroids(&pos, input).len())
+fn part1(grid: &Grid) -> usize {
+    grid.iter()
+        .map(|pos| get_visible_asteroids(&pos, grid).len())
         .max()
         .expect("expected at least one asteroid")
 }
@@ -77,9 +78,62 @@ fn gcd(mut a: i32, mut b: i32) -> i32 {
     b.abs()
 }
 
+fn part2(grid: &Grid) -> i32 {
+    let mut grid = grid.clone();
+    let station = grid
+        .iter()
+        .max_by_key(|pos| get_visible_asteroids(&pos, &grid).len())
+        .unwrap()
+        .clone();
+    let mut destroyed = 0usize;
+    loop {
+        let mut targets: Vec<Position> = get_visible_asteroids(&station, &grid)
+            .iter()
+            .cloned()
+            .collect();
+        targets.sort_by(|a, b| {
+            get_angle(&station, a)
+                .partial_cmp(&get_angle(&station, b))
+                .unwrap()
+        });
+        for target in targets {
+            grid.remove(&target);
+            destroyed += 1;
+            if destroyed == 200 {
+                return target.x * 100 + target.y;
+            }
+        }
+    }
+}
+
+fn get_angle(station: &Position, pos: &Position) -> f64 {
+    let x = (pos.x - station.x) as f64;
+    let y = (pos.y - station.y) as f64;
+    let angle = x.atan2(-y);
+    if angle < 0f64 {
+        angle + (2f64 * PI)
+    } else {
+        angle
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use std::f64::consts::*;
+
     use super::*;
+
+    #[test]
+    fn test_get_angle() {
+        let zero = Position { x: 0, y: 0 };
+        assert_eq!(get_angle(&zero, &(Position { x: 0, y: -1 })), 0f64);
+        assert_eq!(get_angle(&zero, &(Position { x: 1, y: 0 })), FRAC_PI_2);
+        assert_eq!(get_angle(&zero, &(Position { x: 0, y: 1 })), PI);
+        assert_eq!(
+            get_angle(&zero, &(Position { x: -1, y: 0 })),
+            PI + FRAC_PI_2
+        );
+    }
 
     #[test]
     fn test_part1() {
