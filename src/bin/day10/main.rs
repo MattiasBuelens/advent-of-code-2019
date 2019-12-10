@@ -51,19 +51,15 @@ fn get_visible_asteroids(center: &Position, grid: &Grid) -> HashSet<Position> {
         let step_y = dy / div;
         let mut x = center.x + step_x;
         let mut y = center.y + step_y;
-        //        println!("{:?} {:?} {} {}", center, other, step_x, step_y);
         while x != other.x || y != other.y {
             let pos = Position { x, y };
-            //            println!("{:?}", pos);
             if grid.contains(&pos) {
-                //                println!("insert pos {:?}", pos);
                 visible.insert(pos);
                 continue 'outer;
             }
             x += step_x;
             y += step_y;
         }
-        //        println!("insert other {:?}", other);
         visible.insert(other.clone());
     }
     visible
