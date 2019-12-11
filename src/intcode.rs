@@ -326,12 +326,10 @@ impl<M1: Machine, M2: Machine> Machine for Chain<M1, M2> {
 }
 
 pub fn make_chain(mut machines: VecDeque<Box<dyn Machine>>) -> Box<dyn Machine> {
-    match machines.len() {
-        0 => panic!("no machines"),
-        1 => Box::new(machines.pop_front().unwrap()),
-        _ => {
-            let head = machines.pop_front().unwrap();
-            Box::new(Chain::new(head, make_chain(machines)))
-        }
+    let head = machines.pop_front().expect("expected at least one machine");
+    if machines.is_empty() {
+        head
+    } else {
+        Box::new(Chain::new(head, make_chain(machines)))
     }
 }
