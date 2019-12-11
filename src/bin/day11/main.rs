@@ -1,0 +1,108 @@
+use advent_of_code_2019::input::parse_list;
+use advent_of_code_2019::intcode::*;
+use advent_of_code_2019::position::Position;
+use std::collections::HashMap;
+
+fn main() {
+    let input: Vec<i64> = parse_list(include_str!("input"), ',');
+    println!("Answer to part 1: {}", part1(&input));
+}
+
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+enum Color {
+    BLACK,
+    WHITE,
+}
+
+impl Color {
+    fn parse(value: i64) -> Color {
+        match value {
+            0 => Color::BLACK,
+            1 => Color::WHITE,
+            _ => panic!("invalid color {}", value),
+        }
+    }
+
+    fn to_number(&self) -> i64 {
+        match *self {
+            Color::BLACK => 0,
+            Color::WHITE => 1,
+        }
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone)]
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+impl Direction {
+    fn step(&self) -> Position {
+        match *self {
+            Direction::Up => Position { x: 0, y: 1 },
+            Direction::Down => Position { x: 0, y: -1 },
+            Direction::Left => Position { x: -1, y: 0 },
+            Direction::Right => Position { x: 1, y: 0 },
+        }
+    }
+    fn rotate_left(&self) -> Direction {
+        match *self {
+            Direction::Up => Direction::Left,
+            Direction::Left => Direction::Down,
+            Direction::Down => Direction::Right,
+            Direction::Right => Direction::Up,
+        }
+    }
+    fn rotate_right(&self) -> Direction {
+        match *self {
+            Direction::Up => Direction::Right,
+            Direction::Right => Direction::Down,
+            Direction::Down => Direction::Left,
+            Direction::Left => Direction::Up,
+        }
+    }
+}
+
+fn part1(program: &Vec<i64>) -> usize {
+    let mut machine = ProgramMachine::new(program.clone(), vec![]);
+    let mut grid: HashMap<Position, Color> = HashMap::new();
+    let mut pos = Position::zero();
+    let mut dir = Direction::Up;
+    loop {
+        let color = grid.get(&pos).unwrap_or(&Color::BLACK);
+        machine.add_input(color.to_number());
+        match machine.run_to_output() {
+            Some(value) => {
+                grid.insert(pos, Color::parse(value));
+            }
+            None => {
+                break;
+            }
+        }
+        match machine.run_to_output() {
+            Some(value) => {
+                dir = match value {
+                    0 => dir.rotate_left(),
+                    1 => dir.rotate_right(),
+                    _ => panic!("unexpected rotation"),
+                }
+            }
+            None => {
+                break;
+            }
+        }
+        pos += dir.step();
+    }
+    grid.len()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_part1() {}
+}
