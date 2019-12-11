@@ -1,11 +1,14 @@
+use std::collections::HashMap;
+
 use advent_of_code_2019::input::parse_list;
 use advent_of_code_2019::intcode::*;
 use advent_of_code_2019::position::Position;
-use std::collections::HashMap;
 
 fn main() {
     let input: Vec<i64> = parse_list(include_str!("input"), ',');
     println!("Answer to part 1: {}", part1(&input));
+    println!("Answer to part 2:");
+    part2(&input);
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
@@ -27,6 +30,13 @@ impl Color {
         match *self {
             Color::BLACK => 0,
             Color::WHITE => 1,
+        }
+    }
+
+    fn print(&self) -> &'static str {
+        match *self {
+            Color::BLACK => "  ",
+            Color::WHITE => "##",
         }
     }
 }
@@ -66,11 +76,12 @@ impl Direction {
     }
 }
 
-fn part1(program: &Vec<i64>) -> usize {
+fn run(program: &Vec<i64>, start_color: Color) -> HashMap<Position, Color> {
     let mut machine = ProgramMachine::new(program.clone(), vec![]);
     let mut grid: HashMap<Position, Color> = HashMap::new();
     let mut pos = Position::zero();
     let mut dir = Direction::Up;
+    grid.insert(pos, start_color);
     loop {
         let color = grid.get(&pos).unwrap_or(&Color::BLACK);
         machine.add_input(color.to_number());
@@ -96,7 +107,28 @@ fn part1(program: &Vec<i64>) -> usize {
         }
         pos += dir.step();
     }
+    grid
+}
+
+fn part1(program: &Vec<i64>) -> usize {
+    let grid = run(program, Color::BLACK);
     grid.len()
+}
+
+fn part2(program: &Vec<i64>) {
+    let grid = run(program, Color::WHITE);
+    let min_x = grid.keys().min_by_key(|pos| pos.x).unwrap().x;
+    let min_y = grid.keys().min_by_key(|pos| pos.y).unwrap().y;
+    let max_x = grid.keys().max_by_key(|pos| pos.x).unwrap().x;
+    let max_y = grid.keys().max_by_key(|pos| pos.y).unwrap().y;
+    for y in (min_y..=max_y).rev() {
+        let mut line = String::new();
+        for x in min_x..=max_x {
+            let color = grid.get(&Position::new(x, y)).unwrap_or(&Color::BLACK);
+            line.push_str(color.print());
+        }
+        println!("{}", line);
+    }
 }
 
 #[cfg(test)]
