@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::f64::consts::PI;
 
+use advent_of_code_2019::math::gcd;
 use advent_of_code_2019::vector2d::Vector2D;
 
 fn main() {
@@ -52,15 +53,6 @@ fn get_visible_asteroids(center: &Vector2D, grid: &Grid) -> HashSet<Vector2D> {
         visible.insert(pos);
     }
     visible
-}
-
-fn gcd(mut a: i32, mut b: i32) -> i32 {
-    while a != 0 {
-        let old_a = a;
-        a = b % a;
-        b = old_a;
-    }
-    b.abs()
 }
 
 fn part2(grid: &Grid) -> i32 {
