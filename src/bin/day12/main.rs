@@ -106,4 +106,11 @@ mod tests {
         simulate(&mut moons, 10);
         assert_eq!(total_energy(&moons), 179);
     }
+
+    #[test]
+    fn test_part1_example2() {
+        let mut moons: Vec<Moon> = parse_input(include_str!("example2"));
+        simulate(&mut moons, 100);
+        assert_eq!(total_energy(&moons), 1940);
+    }
 }
