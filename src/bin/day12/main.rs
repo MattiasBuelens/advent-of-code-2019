@@ -112,10 +112,12 @@ fn simulate(moons: &mut Vec<Moon>, steps: usize) {
 
 fn simulate_step(moons: &mut Vec<Moon>) {
     for i in 0..moons.len() {
-        for j in (i + 1)..moons.len() {
-            let gravity = moons[i].get_gravity(&moons[j]);
-            moons[i].apply_acceleration(gravity);
-            moons[j].apply_acceleration(-gravity);
+        let (head, tail) = moons.split_at_mut(i + 1);
+        let left = head.last_mut().unwrap();
+        for right in tail {
+            let gravity = left.get_gravity(&right);
+            left.apply_acceleration(gravity);
+            right.apply_acceleration(-gravity);
         }
     }
     for moon in moons.iter_mut() {
