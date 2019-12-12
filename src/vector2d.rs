@@ -1,4 +1,3 @@
-use std::cmp::Ordering;
 use std::ops::{Add, AddAssign, Sub, SubAssign};
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
@@ -18,10 +17,6 @@ impl Vector2D {
 
     pub fn manhattan_distance(&self) -> i32 {
         self.x.abs() + self.y.abs()
-    }
-
-    pub fn compare_by_manhattan_distance(&self, other: &Vector2D) -> Ordering {
-        self.manhattan_distance().cmp(&other.manhattan_distance())
     }
 }
 

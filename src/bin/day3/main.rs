@@ -21,7 +21,7 @@ fn main() {
 fn part1(crossings: &Vec<Vector2D>) -> i32 {
     let min_crossing = crossings
         .iter()
-        .min_by(|x, y| x.compare_by_manhattan_distance(y))
+        .min_by_key(|x| x.manhattan_distance())
         .cloned()
         .expect("expected at least one crossing");
 
