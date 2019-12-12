@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Neg, Sub, SubAssign};
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
 pub struct Vector3D {
@@ -14,6 +14,10 @@ impl Vector3D {
 
     pub fn zero() -> Vector3D {
         Vector3D::new(0, 0, 0)
+    }
+
+    pub fn manhattan_distance(&self) -> i32 {
+        self.x.abs() + self.y.abs() + self.z.abs()
     }
 }
 
@@ -44,6 +48,14 @@ impl Sub for Vector3D {
             y: self.y - other.y,
             z: self.z - other.z,
         }
+    }
+}
+
+impl Neg for Vector3D {
+    type Output = Self;
+
+    fn neg(self) -> Vector3D {
+        Vector3D::new(-self.x, -self.y, -self.z)
     }
 }
 
