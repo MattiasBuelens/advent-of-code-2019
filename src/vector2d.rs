@@ -2,65 +2,65 @@ use std::cmp::Ordering;
 use std::ops::{Add, AddAssign, Sub, SubAssign};
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
-pub struct Position {
+pub struct Vector2D {
     pub x: i32,
     pub y: i32,
 }
 
-impl Position {
-    pub fn new(x: i32, y: i32) -> Position {
-        Position { x, y }
+impl Vector2D {
+    pub fn new(x: i32, y: i32) -> Vector2D {
+        Vector2D { x, y }
     }
 
-    pub fn zero() -> Position {
-        Position::new(0, 0)
+    pub fn zero() -> Vector2D {
+        Vector2D::new(0, 0)
     }
 
     pub fn manhattan_distance(&self) -> i32 {
         self.x.abs() + self.y.abs()
     }
 
-    pub fn compare_by_manhattan_distance(&self, other: &Position) -> Ordering {
+    pub fn compare_by_manhattan_distance(&self, other: &Vector2D) -> Ordering {
         self.manhattan_distance().cmp(&other.manhattan_distance())
     }
 }
 
-impl Default for Position {
+impl Default for Vector2D {
     fn default() -> Self {
-        Position::zero()
+        Vector2D::zero()
     }
 }
 
-impl Add for Position {
+impl Add for Vector2D {
     type Output = Self;
 
-    fn add(self: Position, other: Position) -> Position {
-        Position {
+    fn add(self: Vector2D, other: Vector2D) -> Vector2D {
+        Vector2D {
             x: self.x + other.x,
             y: self.y + other.y,
         }
     }
 }
 
-impl Sub for Position {
+impl Sub for Vector2D {
     type Output = Self;
 
-    fn sub(self: Position, other: Position) -> Position {
-        Position {
+    fn sub(self: Vector2D, other: Vector2D) -> Vector2D {
+        Vector2D {
             x: self.x - other.x,
             y: self.y - other.y,
         }
     }
 }
 
-impl AddAssign for Position {
+impl AddAssign for Vector2D {
     fn add_assign(&mut self, other: Self) {
         self.x.add_assign(other.x);
         self.y.add_assign(other.y);
     }
 }
 
-impl SubAssign for Position {
+impl SubAssign for Vector2D {
     fn sub_assign(&mut self, other: Self) {
         self.x.sub_assign(other.x);
         self.y.sub_assign(other.y);

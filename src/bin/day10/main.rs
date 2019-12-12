@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::f64::consts::PI;
 
-use advent_of_code_2019::position::Position;
+use advent_of_code_2019::vector2d::Vector2D;
 
 fn main() {
     let grid: Grid = parse_input(include_str!("input"));
@@ -9,7 +9,7 @@ fn main() {
     println!("Answer to part 2: {}", part2(&grid));
 }
 
-type Grid = HashSet<Position>;
+type Grid = HashSet<Vector2D>;
 
 fn parse_input(input: &str) -> Grid {
     let mut grid = HashSet::new();
@@ -18,7 +18,7 @@ fn parse_input(input: &str) -> Grid {
         let mut x = 0;
         for cell in line.chars() {
             if cell == '#' {
-                grid.insert(Position::new(x, y));
+                grid.insert(Vector2D::new(x, y));
             }
             x += 1;
         }
@@ -34,9 +34,9 @@ fn part1(grid: &Grid) -> usize {
         .expect("expected at least one asteroid")
 }
 
-fn get_visible_asteroids(center: &Position, grid: &Grid) -> HashSet<Position> {
+fn get_visible_asteroids(center: &Vector2D, grid: &Grid) -> HashSet<Vector2D> {
     let center = *center;
-    let mut visible: HashSet<Position> = HashSet::new();
+    let mut visible: HashSet<Vector2D> = HashSet::new();
     for other in grid {
         let other = *other;
         if center == other {
@@ -44,7 +44,7 @@ fn get_visible_asteroids(center: &Position, grid: &Grid) -> HashSet<Position> {
         }
         let delta = other - center;
         let div = gcd(delta.x, delta.y);
-        let step = Position::new(delta.x / div, delta.y / div);
+        let step = Vector2D::new(delta.x / div, delta.y / div);
         let mut pos = center + step;
         while !grid.contains(&pos) {
             pos += step;
@@ -72,7 +72,7 @@ fn part2(grid: &Grid) -> i32 {
         .clone();
     let mut destroyed = 0usize;
     loop {
-        let mut targets: Vec<Position> = get_visible_asteroids(&station, &grid)
+        let mut targets: Vec<Vector2D> = get_visible_asteroids(&station, &grid)
             .iter()
             .cloned()
             .collect();
@@ -92,7 +92,7 @@ fn part2(grid: &Grid) -> i32 {
     }
 }
 
-fn get_angle(station: &Position, pos: &Position) -> f64 {
+fn get_angle(station: &Vector2D, pos: &Vector2D) -> f64 {
     let x = (pos.x - station.x) as f64;
     let y = (pos.y - station.y) as f64;
     let angle = x.atan2(-y);
@@ -111,11 +111,11 @@ mod tests {
 
     #[test]
     fn test_get_angle() {
-        let zero = Position::new(0, 0);
-        assert_eq!(get_angle(&zero, &(Position::new(0, -1))), 0.0);
-        assert_eq!(get_angle(&zero, &(Position::new(1, 0))), FRAC_PI_2);
-        assert_eq!(get_angle(&zero, &(Position::new(0, 1))), PI);
-        assert_eq!(get_angle(&zero, &(Position::new(-1, 0))), PI + FRAC_PI_2);
+        let zero = Vector2D::new(0, 0);
+        assert_eq!(get_angle(&zero, &(Vector2D::new(0, -1))), 0.0);
+        assert_eq!(get_angle(&zero, &(Vector2D::new(1, 0))), FRAC_PI_2);
+        assert_eq!(get_angle(&zero, &(Vector2D::new(0, 1))), PI);
+        assert_eq!(get_angle(&zero, &(Vector2D::new(-1, 0))), PI + FRAC_PI_2);
     }
 
     #[test]

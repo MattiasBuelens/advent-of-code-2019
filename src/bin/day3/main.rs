@@ -4,7 +4,7 @@ use std::iter::FromIterator;
 use std::str::FromStr;
 
 use advent_of_code_2019::input::parse_list;
-use advent_of_code_2019::position::Position;
+use advent_of_code_2019::vector2d::Vector2D;
 
 fn main() {
     let paths: Vec<Path> = parse_list(include_str!("input"), '\n');
@@ -18,7 +18,7 @@ fn main() {
     println!("Answer to part 2: {}", part2(&trace1, &trace2, &crossings));
 }
 
-fn part1(crossings: &Vec<Position>) -> i32 {
+fn part1(crossings: &Vec<Vector2D>) -> i32 {
     let min_crossing = crossings
         .iter()
         .min_by(|x, y| x.compare_by_manhattan_distance(y))
@@ -28,7 +28,7 @@ fn part1(crossings: &Vec<Position>) -> i32 {
     min_crossing.manhattan_distance()
 }
 
-fn part2(trace1: &Vec<Position>, trace2: &Vec<Position>, crossings: &Vec<Position>) -> usize {
+fn part2(trace1: &Vec<Vector2D>, trace2: &Vec<Vector2D>, crossings: &Vec<Vector2D>) -> usize {
     let min_crossing = crossings
         .iter()
         .min_by(|left, right| {
@@ -41,17 +41,17 @@ fn part2(trace1: &Vec<Position>, trace2: &Vec<Position>, crossings: &Vec<Positio
     total_steps_to_reach(&min_crossing, &trace1, &trace2)
 }
 
-fn find_crossings(trace1: &Vec<Position>, trace2: &Vec<Position>) -> Vec<Position> {
-    let trace1_set: HashSet<Position, RandomState> = HashSet::from_iter(trace1.iter().cloned());
-    let trace2_set: HashSet<Position, RandomState> = HashSet::from_iter(trace2.iter().cloned());
+fn find_crossings(trace1: &Vec<Vector2D>, trace2: &Vec<Vector2D>) -> Vec<Vector2D> {
+    let trace1_set: HashSet<Vector2D, RandomState> = HashSet::from_iter(trace1.iter().cloned());
+    let trace2_set: HashSet<Vector2D, RandomState> = HashSet::from_iter(trace2.iter().cloned());
     (&trace1_set).intersection(&trace2_set).cloned().collect()
 }
 
-fn total_steps_to_reach(pos: &Position, trace1: &Vec<Position>, trace2: &Vec<Position>) -> usize {
+fn total_steps_to_reach(pos: &Vector2D, trace1: &Vec<Vector2D>, trace2: &Vec<Vector2D>) -> usize {
     steps_to_reach(pos, trace1) + steps_to_reach(pos, trace2)
 }
 
-fn steps_to_reach(pos: &Position, trace: &Vec<Position>) -> usize {
+fn steps_to_reach(pos: &Vector2D, trace: &Vec<Vector2D>) -> usize {
     trace.iter().position(|x| x == pos).unwrap() + 1
 }
 
@@ -64,12 +64,12 @@ enum Direction {
 }
 
 impl Direction {
-    fn step(&self) -> Position {
+    fn step(&self) -> Vector2D {
         match *self {
-            Direction::Up => Position { x: 0, y: 1 },
-            Direction::Down => Position { x: 0, y: -1 },
-            Direction::Left => Position { x: -1, y: 0 },
-            Direction::Right => Position { x: 1, y: 0 },
+            Direction::Up => Vector2D { x: 0, y: 1 },
+            Direction::Down => Vector2D { x: 0, y: -1 },
+            Direction::Left => Vector2D { x: -1, y: 0 },
+            Direction::Right => Vector2D { x: 1, y: 0 },
         }
     }
 }
@@ -122,9 +122,9 @@ impl FromStr for Path {
 }
 
 impl Path {
-    fn trace(&self) -> Vec<Position> {
+    fn trace(&self) -> Vec<Vector2D> {
         let mut trace = Vec::new();
-        let mut pos = Position::zero();
+        let mut pos = Vector2D::zero();
         for mv in &self.moves {
             for _ in 0..mv.steps {
                 pos += mv.direction.step();

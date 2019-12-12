@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use advent_of_code_2019::input::parse_list;
 use advent_of_code_2019::intcode::*;
-use advent_of_code_2019::position::Position;
+use advent_of_code_2019::vector2d::Vector2D;
 
 fn main() {
     let input: Vec<i64> = parse_list(include_str!("input"), ',');
@@ -50,12 +50,12 @@ enum Direction {
 }
 
 impl Direction {
-    fn step(&self) -> Position {
+    fn step(&self) -> Vector2D {
         match *self {
-            Direction::Up => Position { x: 0, y: 1 },
-            Direction::Down => Position { x: 0, y: -1 },
-            Direction::Left => Position { x: -1, y: 0 },
-            Direction::Right => Position { x: 1, y: 0 },
+            Direction::Up => Vector2D { x: 0, y: 1 },
+            Direction::Down => Vector2D { x: 0, y: -1 },
+            Direction::Left => Vector2D { x: -1, y: 0 },
+            Direction::Right => Vector2D { x: 1, y: 0 },
         }
     }
     fn rotate_left(&self) -> Direction {
@@ -76,10 +76,10 @@ impl Direction {
     }
 }
 
-fn run(program: &Vec<i64>, start_color: Color) -> HashMap<Position, Color> {
+fn run(program: &Vec<i64>, start_color: Color) -> HashMap<Vector2D, Color> {
     let mut machine = ProgramMachine::new(program.clone(), vec![]);
-    let mut grid: HashMap<Position, Color> = HashMap::new();
-    let mut pos = Position::zero();
+    let mut grid: HashMap<Vector2D, Color> = HashMap::new();
+    let mut pos = Vector2D::zero();
     let mut dir = Direction::Up;
     grid.insert(pos, start_color);
     loop {
@@ -124,7 +124,7 @@ fn part2(program: &Vec<i64>) {
     for y in (min_y..=max_y).rev() {
         let mut line = String::new();
         for x in min_x..=max_x {
-            let color = grid.get(&Position::new(x, y)).unwrap_or(&Color::BLACK);
+            let color = grid.get(&Vector2D::new(x, y)).unwrap_or(&Color::BLACK);
             line.push_str(color.print());
         }
         println!("{}", line);
