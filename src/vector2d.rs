@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Neg, Sub, SubAssign};
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
 pub struct Vector2D {
@@ -45,6 +45,14 @@ impl Sub for Vector2D {
             x: self.x - other.x,
             y: self.y - other.y,
         }
+    }
+}
+
+impl Neg for Vector2D {
+    type Output = Self;
+
+    fn neg(self) -> Vector2D {
+        Vector2D::new(-self.x, -self.y)
     }
 }
 
