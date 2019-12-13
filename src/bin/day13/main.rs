@@ -157,11 +157,3 @@ fn compute_joystick(screen: &Screen) -> i64 {
         Ordering::Greater => 1, // right
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_part1() {}
-}
