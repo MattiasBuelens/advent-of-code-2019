@@ -58,7 +58,6 @@ fn run_feedback_loop(program: &Vec<i64>, phase_settings: &Vec<i64>) -> i64 {
             StepResult::Halt => {
                 break;
             }
-            StepResult::Jump(_) => panic!("cannot happen"),
         };
     }
 

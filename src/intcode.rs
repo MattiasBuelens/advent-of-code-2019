@@ -76,7 +76,6 @@ enum Instruction {
 pub enum StepResult {
     Ok,
     NeedInput,
-    Jump(usize),
     Output(i64),
     Halt,
 }
