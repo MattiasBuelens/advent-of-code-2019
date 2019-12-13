@@ -136,62 +136,6 @@ impl Instruction {
             Instruction::Halt => 1,
         }
     }
-
-    fn evaluate(
-        &self,
-        program: &mut Vec<i64>,
-        input: &mut VecDeque<i64>,
-        base: &mut i64,
-    ) -> StepResult {
-        match self {
-            Instruction::Add(left, right, result) => {
-                result.write(
-                    program,
-                    *base,
-                    left.read(program, *base) + right.read(program, *base),
-                );
-            }
-            Instruction::Multiply(left, right, result) => {
-                result.write(
-                    program,
-                    *base,
-                    left.read(program, *base) * right.read(program, *base),
-                );
-            }
-            Instruction::Read(result) => match input.pop_front() {
-                Some(value) => {
-                    result.write(program, *base, value);
-                }
-                None => return StepResult::NeedInput,
-            },
-            Instruction::Write(value) => {
-                return StepResult::Output(value.read(program, *base));
-            }
-            Instruction::JumpIfTrue(test, jump) => {
-                if test.read(program, *base) != 0 {
-                    return StepResult::Jump(jump.read(program, *base) as usize);
-                }
-            }
-            Instruction::JumpIfFalse(test, jump) => {
-                if test.read(program, *base) == 0 {
-                    return StepResult::Jump(jump.read(program, *base) as usize);
-                }
-            }
-            Instruction::LessThan(left, right, result) => {
-                let test = left.read(program, *base) < right.read(program, *base);
-                result.write(program, *base, if test { 1 } else { 0 });
-            }
-            Instruction::Equals(left, right, result) => {
-                let test = left.read(program, *base) == right.read(program, *base);
-                result.write(program, *base, if test { 1 } else { 0 });
-            }
-            Instruction::RelativeBaseOffset(offset) => {
-                *base += offset.read(program, *base);
-            }
-            Instruction::Halt => return StepResult::Halt,
-        }
-        StepResult::Ok
-    }
 }
 
 pub trait Machine {
@@ -259,22 +203,61 @@ impl Machine for ProgramMachine {
     }
 
     fn step(&mut self) -> StepResult {
-        let instr = Instruction::parse(&self.program, self.pc);
-        let result = instr.evaluate(&mut self.program, &mut self.input, &mut self.base);
-        match result {
-            StepResult::Ok | StepResult::Output(_) => {
+        let program = &mut self.program;
+        let base = &mut self.base;
+        let instr = Instruction::parse(&program, self.pc);
+        match &instr {
+            Instruction::Add(left, right, result) => {
+                result.write(
+                    program,
+                    *base,
+                    left.read(program, *base) + right.read(program, *base),
+                );
+            }
+            Instruction::Multiply(left, right, result) => {
+                result.write(
+                    program,
+                    *base,
+                    left.read(program, *base) * right.read(program, *base),
+                );
+            }
+            Instruction::Read(result) => match self.input.pop_front() {
+                Some(value) => {
+                    result.write(program, *base, value);
+                }
+                None => return StepResult::NeedInput,
+            },
+            Instruction::Write(value) => {
                 self.pc += instr.length();
-                result
+                return StepResult::Output(value.read(program, *base));
             }
-            StepResult::Jump(jump) => {
-                self.pc = jump;
-                StepResult::Ok
+            Instruction::JumpIfTrue(test, jump) => {
+                if test.read(program, *base) != 0 {
+                    self.pc = jump.read(program, *base) as usize;
+                    return StepResult::Ok;
+                }
             }
-            StepResult::NeedInput | StepResult::Halt => {
-                // program is paused, do not increment program counter
-                result
+            Instruction::JumpIfFalse(test, jump) => {
+                if test.read(program, *base) == 0 {
+                    self.pc = jump.read(program, *base) as usize;
+                    return StepResult::Ok;
+                }
             }
-        }
+            Instruction::LessThan(left, right, result) => {
+                let test = left.read(program, *base) < right.read(program, *base);
+                result.write(program, *base, if test { 1 } else { 0 });
+            }
+            Instruction::Equals(left, right, result) => {
+                let test = left.read(program, *base) == right.read(program, *base);
+                result.write(program, *base, if test { 1 } else { 0 });
+            }
+            Instruction::RelativeBaseOffset(offset) => {
+                *base += offset.read(program, *base);
+            }
+            Instruction::Halt => return StepResult::Halt,
+        };
+        self.pc += instr.length();
+        StepResult::Ok
     }
 }
 
