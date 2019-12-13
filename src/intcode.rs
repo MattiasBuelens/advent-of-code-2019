@@ -158,7 +158,7 @@ pub trait Machine {
                 StepResult::NeedInput => panic!("missing input"),
                 StepResult::Output(value) => return Some(value),
                 StepResult::Halt => return None,
-                _ => {}
+                StepResult::Ok => {}
             };
         }
     }

@@ -92,7 +92,7 @@ fn part2(program: &Vec<i64>, interactive: bool) -> i64 {
                 StepResult::Halt => {
                     break 'outer;
                 }
-                _ => {}
+                StepResult::Ok => {}
             }
         };
         let y = machine.run_to_output().unwrap();
