@@ -1,7 +1,9 @@
 use std::collections::HashMap;
+use std::io;
+use std::io::BufRead;
 
 use advent_of_code_2019::input::parse_list;
-use advent_of_code_2019::intcode::{Machine, ProgramMachine};
+use advent_of_code_2019::intcode::*;
 use advent_of_code_2019::vector2d::Vector2D;
 
 fn main() {
@@ -30,6 +32,16 @@ impl Tile {
             _ => panic!("unknown tile id {}", id),
         }
     }
+
+    fn print(&self) -> &'static str {
+        match *self {
+            Tile::EMPTY => " ",
+            Tile::WALL => "#",
+            Tile::BLOCK => "X",
+            Tile::PADDLE => "_",
+            Tile::BALL => "O",
+        }
+    }
 }
 
 type Screen = HashMap<Vector2D, Tile>;
@@ -54,8 +66,75 @@ fn part1(program: &Vec<i64>) -> usize {
     screen.values().filter(|tile| **tile == Tile::BLOCK).count()
 }
 
-fn part2(program: &Vec<i64>) -> i32 {
-    0
+fn part2(program: &Vec<i64>) -> i64 {
+    let mut program = program.clone();
+    program[0] = 2;
+
+    let mut screen: Screen = HashMap::new();
+    let mut score: i64 = 0;
+    let mut machine = ProgramMachine::new(program, vec![]);
+    'outer: loop {
+        let x: i64 = loop {
+            match machine.step() {
+                StepResult::NeedInput => {
+                    print_screen(&screen);
+                    println!("Score: {}", score);
+                    machine.add_input(read_joystick());
+                }
+                StepResult::Output(value) => {
+                    break value;
+                }
+                StepResult::Halt => {
+                    break 'outer;
+                }
+                _ => {}
+            }
+        };
+        let y = machine.run_to_output().unwrap();
+        let z = machine.run_to_output().unwrap();
+        if x == -1 && y == 0 {
+            score = z;
+        } else {
+            screen.insert(Vector2D::new(x as i32, y as i32), Tile::from_id(z as i32));
+        }
+    }
+
+    score
+}
+
+fn print_screen(screen: &Screen) {
+    let min_x = screen.keys().min_by_key(|pos| pos.x).unwrap().x;
+    let min_y = screen.keys().min_by_key(|pos| pos.y).unwrap().y;
+    let max_x = screen.keys().max_by_key(|pos| pos.x).unwrap().x;
+    let max_y = screen.keys().max_by_key(|pos| pos.y).unwrap().y;
+    for y in (min_y..=max_y).rev() {
+        let mut line = String::new();
+        for x in min_x..=max_x {
+            let tile = screen.get(&Vector2D::new(x, y)).unwrap_or(&Tile::EMPTY);
+            line.push_str(tile.print());
+        }
+        println!("{}", line);
+    }
+}
+
+fn read_joystick() -> i64 {
+    let stdin = io::stdin();
+    let mut lock = stdin.lock();
+    println!("Enter next move (L, R or nothing):");
+    loop {
+        let mut line = String::new();
+        match lock.read_line(&mut line) {
+            Ok(_) => match line.to_ascii_lowercase().trim() {
+                "" => return 0,
+                "l" => return -1,
+                "r" => return 1,
+                _ => {
+                    println!("Unknown input {}", &line);
+                }
+            },
+            Err(err) => panic!("input error: {}", err),
+        }
+    }
 }
 
 #[cfg(test)]
