@@ -10,7 +10,7 @@ use advent_of_code_2019::vector2d::Vector2D;
 fn main() {
     let program: Vec<i64> = parse_list(include_str!("input"), ',');
     println!("Answer to part 1: {}", part1(&program));
-    println!("Answer to part 2: {}", part2(&program));
+    println!("Answer to part 2: {}", part2(&program, false));
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -67,7 +67,7 @@ fn part1(program: &Vec<i64>) -> usize {
     screen.values().filter(|tile| **tile == Tile::BLOCK).count()
 }
 
-fn part2(program: &Vec<i64>) -> i64 {
+fn part2(program: &Vec<i64>, interactive: bool) -> i64 {
     let mut program = program.clone();
     program[0] = 2;
 
@@ -78,10 +78,13 @@ fn part2(program: &Vec<i64>) -> i64 {
         let x: i64 = loop {
             match machine.step() {
                 StepResult::NeedInput => {
-                    // print_screen(&screen);
-                    // println!("Score: {}", score);
-                    // machine.add_input(read_joystick());
-                    machine.add_input(compute_joystick(&screen));
+                    machine.add_input(if interactive {
+                        print_screen(&screen);
+                        println!("Score: {}", score);
+                        read_joystick()
+                    } else {
+                        compute_joystick(&screen)
+                    });
                 }
                 StepResult::Output(value) => {
                     break value;
