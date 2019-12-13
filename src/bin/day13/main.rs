@@ -112,7 +112,7 @@ fn print_screen(screen: &Screen) {
     let min_y = screen.keys().min_by_key(|pos| pos.y).unwrap().y;
     let max_x = screen.keys().max_by_key(|pos| pos.x).unwrap().x;
     let max_y = screen.keys().max_by_key(|pos| pos.y).unwrap().y;
-    for y in (min_y..=max_y).rev() {
+    for y in min_y..=max_y {
         let mut line = String::new();
         for x in min_x..=max_x {
             let tile = screen.get(&Vector2D::new(x, y)).unwrap_or(&Tile::EMPTY);
