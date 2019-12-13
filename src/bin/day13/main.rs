@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::io;
 use std::io::BufRead;
@@ -77,9 +78,10 @@ fn part2(program: &Vec<i64>) -> i64 {
         let x: i64 = loop {
             match machine.step() {
                 StepResult::NeedInput => {
-                    print_screen(&screen);
-                    println!("Score: {}", score);
-                    machine.add_input(read_joystick());
+                    // print_screen(&screen);
+                    // println!("Score: {}", score);
+                    // machine.add_input(read_joystick());
+                    machine.add_input(compute_joystick(&screen));
                 }
                 StepResult::Output(value) => {
                     break value;
@@ -134,6 +136,22 @@ fn read_joystick() -> i64 {
             },
             Err(err) => panic!("input error: {}", err),
         }
+    }
+}
+
+fn compute_joystick(screen: &Screen) -> i64 {
+    let (paddle_pos, _) = screen
+        .iter()
+        .find(|(_, tile)| **tile == Tile::PADDLE)
+        .expect("paddle must exist");
+    let (ball_pos, _) = screen
+        .iter()
+        .find(|(_, tile)| **tile == Tile::BALL)
+        .expect("ball must exist");
+    match ball_pos.x.cmp(&paddle_pos.x) {
+        Ordering::Equal => 0,   // neutral
+        Ordering::Less => -1,   // left
+        Ordering::Greater => 1, // right
     }
 }
 
