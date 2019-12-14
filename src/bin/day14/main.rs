@@ -70,16 +70,10 @@ fn part1(input: &Vec<Reaction>) -> i64 {
     ore_needed_for_fuel(1, &reactions)
 }
 
-fn ore_needed_for_fuel(fuel_amount: i64, reactions: &HashMap<String, Reaction>) -> i64 {
+fn ore_needed_for_fuel(fuel: i64, reactions: &HashMap<String, Reaction>) -> i64 {
     let mut stock: HashMap<String, i64> = HashMap::new();
     let mut ore = 0;
-    produce(
-        &"FUEL".to_string(),
-        fuel_amount,
-        &reactions,
-        &mut stock,
-        &mut ore,
-    );
+    produce(&"FUEL".to_string(), fuel, &reactions, &mut stock, &mut ore);
     ore
 }
 
