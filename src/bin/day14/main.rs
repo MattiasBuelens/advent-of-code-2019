@@ -166,5 +166,50 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_part1() {}
+    fn test_part1_example1() {
+        let input: Vec<Reaction> = parse_list(include_str!("example1"), '\n');
+        assert_eq!(part1(&input), 31);
+    }
+
+    #[test]
+    fn test_part1_example2() {
+        let input: Vec<Reaction> = parse_list(include_str!("example2"), '\n');
+        assert_eq!(part1(&input), 165);
+    }
+
+    #[test]
+    fn test_part1_example3() {
+        let input: Vec<Reaction> = parse_list(include_str!("example3"), '\n');
+        assert_eq!(part1(&input), 13312);
+    }
+
+    #[test]
+    fn test_part1_example4() {
+        let input: Vec<Reaction> = parse_list(include_str!("example4"), '\n');
+        assert_eq!(part1(&input), 180697);
+    }
+
+    #[test]
+    fn test_part1_example5() {
+        let input: Vec<Reaction> = parse_list(include_str!("example5"), '\n');
+        assert_eq!(part1(&input), 2210736);
+    }
+
+    #[test]
+    fn test_part2_example3() {
+        let input: Vec<Reaction> = parse_list(include_str!("example3"), '\n');
+        assert_eq!(part2(&input), 82892753);
+    }
+
+    #[test]
+    fn test_part2_example4() {
+        let input: Vec<Reaction> = parse_list(include_str!("example4"), '\n');
+        assert_eq!(part2(&input), 5586022);
+    }
+
+    #[test]
+    fn test_part2_example5() {
+        let input: Vec<Reaction> = parse_list(include_str!("example5"), '\n');
+        assert_eq!(part2(&input), 460664);
+    }
 }
