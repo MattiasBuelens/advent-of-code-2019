@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt::{Display, Error, Formatter};
 use std::str::FromStr;
@@ -67,9 +68,19 @@ impl Display for Reaction {
 
 fn part1(input: &Vec<Reaction>) -> i64 {
     let reactions = reactions_by_output(input.clone());
+    ore_needed_for_fuel(1, &reactions)
+}
+
+fn ore_needed_for_fuel(fuel_amount: i64, reactions: &HashMap<String, Reaction>) -> i64 {
     let mut stock: HashMap<String, i64> = HashMap::new();
     let mut ore = 0;
-    produce(&"FUEL".to_string(), 1, &reactions, &mut stock, &mut ore);
+    produce(
+        &"FUEL".to_string(),
+        fuel_amount,
+        &reactions,
+        &mut stock,
+        &mut ore,
+    );
     ore
 }
 
@@ -122,7 +133,33 @@ fn consume_stock(chemical: &String, amount: i64, stock: &mut HashMap<String, i64
 }
 
 fn part2(input: &Vec<Reaction>) -> i64 {
-    0
+    let reactions = reactions_by_output(input.clone());
+    let ore_available: i64 = 1_000_000_000_000;
+
+    // Find upper bound
+    let mut max_fuel: i64 = 1;
+    while ore_needed_for_fuel(max_fuel, &reactions) < ore_available {
+        max_fuel *= 2;
+    }
+
+    // Binary search for fuel amount that is just below available ore amount
+    let mut low = max_fuel / 2;
+    let mut high = max_fuel;
+    while low <= high {
+        let mid = low + (high - low) / 2;
+        let ore_needed = ore_needed_for_fuel(mid, &reactions);
+        match ore_needed.cmp(&ore_available) {
+            Ordering::Greater => {
+                high = mid - 1;
+            }
+            _ => {
+                low = mid + 1;
+            }
+        }
+    }
+
+    let fuel = low - 1;
+    fuel
 }
 
 #[cfg(test)]
