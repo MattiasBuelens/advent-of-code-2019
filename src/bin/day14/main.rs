@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::{Display, Error, Formatter};
 use std::str::FromStr;
 
 use advent_of_code_2019::input::parse_list;
@@ -27,6 +28,12 @@ impl FromStr for Quantity {
     }
 }
 
+impl Display for Quantity {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        write!(f, "{} {}", self.amount, self.chemical)
+    }
+}
+
 #[derive(Debug, Clone)]
 struct Reaction {
     inputs: Vec<Quantity>,
@@ -42,6 +49,19 @@ impl FromStr for Reaction {
             inputs: parts[0].split(", ").map(|x| x.parse().unwrap()).collect(),
             output: parts[1].parse().unwrap(),
         })
+    }
+}
+
+impl Display for Reaction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        self.inputs[0].fmt(f)?;
+        for input in self.inputs.iter().skip(1) {
+            write!(f, ", ")?;
+            input.fmt(f)?;
+        }
+        write!(f, " => ")?;
+        self.output.fmt(f)?;
+        Ok(())
     }
 }
 
