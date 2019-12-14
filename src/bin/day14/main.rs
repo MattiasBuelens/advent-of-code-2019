@@ -1,4 +1,3 @@
-use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt::{Display, Error, Formatter};
 use std::str::FromStr;
@@ -87,7 +86,7 @@ fn ore_needed_for_fuel(fuel_amount: i64, reactions: &HashMap<String, Reaction>) 
 fn reactions_by_output(input: Vec<Reaction>) -> HashMap<String, Reaction> {
     let mut reactions: HashMap<String, Reaction> = HashMap::new();
     for reaction in input {
-        assert!(!reactions.contains_key(&reaction.output.chemical));
+        debug_assert!(!reactions.contains_key(&reaction.output.chemical));
         reactions.insert(reaction.output.chemical.clone(), reaction);
     }
     reactions
@@ -128,7 +127,7 @@ fn produce(
 
 fn consume_stock(chemical: &String, amount: i64, stock: &mut HashMap<String, i64>) {
     let stock_amount = stock.get_mut(chemical).unwrap();
-    assert!(*stock_amount >= amount);
+    debug_assert!(*stock_amount >= amount);
     *stock_amount -= amount;
 }
 
@@ -137,29 +136,29 @@ fn part2(input: &Vec<Reaction>) -> i64 {
     let ore_available: i64 = 1_000_000_000_000;
 
     // Find upper bound
-    let mut max_fuel: i64 = 1;
-    while ore_needed_for_fuel(max_fuel, &reactions) < ore_available {
-        max_fuel *= 2;
+    let mut upper_bound: i64 = 1;
+    while ore_needed_for_fuel(upper_bound, &reactions) < ore_available {
+        upper_bound *= 2;
     }
 
     // Binary search for fuel amount that is just below available ore amount
-    let mut low = max_fuel / 2;
-    let mut high = max_fuel;
+    let mut low = upper_bound / 2;
+    let mut high = upper_bound;
     while low <= high {
         let mid = low + (high - low) / 2;
         let ore_needed = ore_needed_for_fuel(mid, &reactions);
-        match ore_needed.cmp(&ore_available) {
-            Ordering::Greater => {
-                high = mid - 1;
-            }
-            _ => {
-                low = mid + 1;
-            }
+        if ore_needed > ore_available {
+            high = mid - 1;
+        } else {
+            low = mid + 1;
         }
     }
+    debug_assert_eq!(low, high + 1);
 
-    let fuel = low - 1;
-    fuel
+    let max_fuel = high;
+    debug_assert!(ore_needed_for_fuel(max_fuel, &reactions) < ore_available);
+    debug_assert!(ore_needed_for_fuel(max_fuel + 1, &reactions) > ore_available);
+    max_fuel
 }
 
 #[cfg(test)]
