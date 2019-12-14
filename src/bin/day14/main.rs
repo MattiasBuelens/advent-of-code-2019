@@ -12,7 +12,7 @@ fn main() {
 
 #[derive(Debug, Clone)]
 struct Quantity {
-    amount: i32,
+    amount: i64,
     chemical: String,
 }
 
@@ -65,9 +65,9 @@ impl Display for Reaction {
     }
 }
 
-fn part1(input: &Vec<Reaction>) -> i32 {
+fn part1(input: &Vec<Reaction>) -> i64 {
     let reactions = reactions_by_output(input.clone());
-    let mut stock: HashMap<String, i32> = HashMap::new();
+    let mut stock: HashMap<String, i64> = HashMap::new();
     let mut ore = 0;
     produce(&"FUEL".to_string(), 1, &reactions, &mut stock, &mut ore);
     ore
@@ -84,10 +84,10 @@ fn reactions_by_output(input: Vec<Reaction>) -> HashMap<String, Reaction> {
 
 fn produce(
     chemical: &String,
-    amount: i32,
+    amount: i64,
     reactions: &HashMap<String, Reaction>,
-    stock: &mut HashMap<String, i32>,
-    ore: &mut i32,
+    stock: &mut HashMap<String, i64>,
+    ore: &mut i64,
 ) {
     if chemical.as_str() == "ORE" {
         // Produce ore
@@ -115,13 +115,13 @@ fn produce(
     }
 }
 
-fn consume_stock(chemical: &String, amount: i32, stock: &mut HashMap<String, i32>) {
+fn consume_stock(chemical: &String, amount: i64, stock: &mut HashMap<String, i64>) {
     let stock_amount = stock.get_mut(chemical).unwrap();
     assert!(*stock_amount >= amount);
     *stock_amount -= amount;
 }
 
-fn part2(input: &Vec<Reaction>) -> i32 {
+fn part2(input: &Vec<Reaction>) -> i64 {
     0
 }
 
