@@ -66,10 +66,10 @@ impl Display for Reaction {
 }
 
 fn part1(input: &Vec<Reaction>) -> i32 {
-    let mut reactions = reactions_by_output(input.clone());
+    let reactions = reactions_by_output(input.clone());
     let mut stock: HashMap<String, i32> = HashMap::new();
     let mut ore = 0;
-    produce_one(&"FUEL".to_string(), &mut reactions, &mut stock, &mut ore);
+    produce(&"FUEL".to_string(), 1, &reactions, &mut stock, &mut ore);
     ore
 }
 
@@ -82,39 +82,43 @@ fn reactions_by_output(input: Vec<Reaction>) -> HashMap<String, Reaction> {
     reactions
 }
 
-fn produce_one(
+fn produce(
     chemical: &String,
+    amount: i32,
     reactions: &HashMap<String, Reaction>,
     stock: &mut HashMap<String, i32>,
     ore: &mut i32,
 ) {
     if chemical.as_str() == "ORE" {
         // Produce ore
-        *stock.entry(chemical.clone()).or_default() += 1;
-        *ore += 1;
+        *stock.entry(chemical.clone()).or_default() += amount;
+        *ore += amount;
     } else {
         let reaction = reactions.get(chemical).unwrap();
+        // Repeat reaction to produce at least $amount outputs
+        let mut repeats = amount / reaction.output.amount;
+        if amount % reaction.output.amount != 0 {
+            repeats += 1;
+        };
         // Consume inputs
         for input in &reaction.inputs {
-            for _ in 0..input.amount {
-                if !has_stock(&input.chemical, stock) {
-                    produce_one(&input.chemical, reactions, stock, ore);
-                }
-                consume_stock(&input.chemical, stock);
+            let needed = input.amount * repeats;
+            let in_stock = *stock.get(&input.chemical.clone()).unwrap_or(&0);
+            if needed > in_stock {
+                produce(&input.chemical, needed - in_stock, reactions, stock, ore);
             }
+            consume_stock(&input.chemical, needed, stock);
         }
         // Produce outputs
-        *stock.entry(reaction.output.chemical.clone()).or_default() += reaction.output.amount;
+        *stock.entry(reaction.output.chemical.clone()).or_default() +=
+            reaction.output.amount * repeats;
     }
 }
 
-fn has_stock(chemical: &String, stock: &HashMap<String, i32>) -> bool {
-    *stock.get(chemical).unwrap_or(&0) > 0
-}
-
-fn consume_stock(chemical: &String, stock: &mut HashMap<String, i32>) {
-    assert!(has_stock(chemical, stock));
-    *stock.get_mut(chemical).unwrap() -= 1;
+fn consume_stock(chemical: &String, amount: i32, stock: &mut HashMap<String, i32>) {
+    let stock_amount = stock.get_mut(chemical).unwrap();
+    assert!(*stock_amount >= amount);
+    *stock_amount -= amount;
 }
 
 fn part2(input: &Vec<Reaction>) -> i32 {
