@@ -66,15 +66,20 @@ impl Display for Reaction {
 }
 
 fn part1(input: &Vec<Reaction>) -> i32 {
-    let mut reactions: HashMap<String, Reaction> = HashMap::new();
-    for reaction in input {
-        assert!(!reactions.contains_key(&reaction.output.chemical));
-        reactions.insert(reaction.output.chemical.clone(), reaction.clone());
-    }
+    let mut reactions = reactions_by_output(input.clone());
     let mut stock: HashMap<String, i32> = HashMap::new();
     let mut ore = 0;
     produce_one(&"FUEL".to_string(), &mut reactions, &mut stock, &mut ore);
     ore
+}
+
+fn reactions_by_output(input: Vec<Reaction>) -> HashMap<String, Reaction> {
+    let mut reactions: HashMap<String, Reaction> = HashMap::new();
+    for reaction in input {
+        assert!(!reactions.contains_key(&reaction.output.chemical));
+        reactions.insert(reaction.output.chemical.clone(), reaction);
+    }
+    reactions
 }
 
 fn produce_one(
