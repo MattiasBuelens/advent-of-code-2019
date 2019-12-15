@@ -115,7 +115,7 @@ fn part1(program: &Vec<i64>) -> i32 {
     )
     .expect("could not find oxygen system");
 
-    print_map(&map.borrow(), &current);
+    // print_map(&map.borrow(), &current);
 
     cost
 }
@@ -149,7 +149,6 @@ fn explore_neighbours(
                     Status::Found => Tile::OxygenSystem,
                 };
                 map.insert(**neighbour, status);
-                // println!("Explored neighbour {:?} = {}", neighbour, map.get(neighbour).unwrap().print());
             }
             map.get(neighbour)
                 .expect("neighbour should have been explored")
@@ -169,7 +168,6 @@ fn go_to(
         return;
     }
 
-    // println!("Go from {:?} to {:?}", current, dest);
     let start = current.clone();
     let (path, _) = astar(
         &start,
