@@ -230,8 +230,40 @@ fn print_map(map: &HashMap<Vector2D, Tile>, droid_position: &Vector2D) {
     }
 }
 
-fn part2(input: &Vec<i64>) -> i64 {
-    0
+fn part2(program: &Vec<i64>) -> i32 {
+    let mut machine = ProgramMachine::new(program.clone(), vec![]);
+    let mut map: HashMap<Vector2D, Tile> = HashMap::new();
+
+    // The droid starts on an empty square
+    let start = Vector2D::zero();
+    map.insert(start, Tile::Empty);
+
+    // The droid's current position
+    let mut current = start;
+
+    // Explore the entire map
+    dijkstra_all(&start, |pos| -> Vec<(Vector2D, i32)> {
+        explore_neighbours(&mut machine, &mut map, &mut current, pos)
+    });
+
+    let (oxygen_pos, _) = map
+        .iter()
+        .find(|(_, tile)| **tile == Tile::OxygenSystem)
+        .expect("no oxygen system found");
+
+    // Find the distance from the oxygen system to all explorable tiles
+    let distances: HashMap<Vector2D, (Vector2D, i32)> =
+        dijkstra_all(oxygen_pos, |pos| -> Vec<(Vector2D, i32)> {
+            get_neighbours(*pos)
+                .iter()
+                .filter(|neighbour| map.get(neighbour).unwrap_or(&Tile::Wall).can_traverse())
+                .map(|neighbour| (*neighbour, 1))
+                .collect()
+        });
+
+    // Find the position with the furthest distance from the oxygen system
+    let (_, max_distance) = distances.values().max_by_key(|(_, dist)| dist).unwrap();
+    *max_distance
 }
 
 #[cfg(test)]
