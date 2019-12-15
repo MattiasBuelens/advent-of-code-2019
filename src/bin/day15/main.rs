@@ -110,9 +110,6 @@ fn part1(program: &Vec<i64>) -> i32 {
         |pos| -> Vec<(Vector2D, i32)> {
             let mut map = map.borrow_mut();
             explore_neighbours(&mut machine, &mut map, &mut current, pos)
-                .iter()
-                .map(|neighbour| (*neighbour, 1))
-                .collect()
         },
         |pos| map.borrow().get(pos) == Some(&Tile::OxygenSystem),
     )
@@ -137,7 +134,7 @@ fn explore_neighbours(
     map: &mut HashMap<Vector2D, Tile>,
     current: &mut Vector2D,
     pos: &Vector2D,
-) -> Vec<Vector2D> {
+) -> Vec<(Vector2D, i32)> {
     get_neighbours(*pos)
         .iter()
         .filter(|neighbour| {
@@ -158,7 +155,7 @@ fn explore_neighbours(
                 .expect("neighbour should have been explored")
                 .can_traverse()
         })
-        .cloned()
+        .map(|neighbour| (*neighbour, 1))
         .collect()
 }
 
