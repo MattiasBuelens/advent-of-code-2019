@@ -106,23 +106,8 @@ fn part1(program: &Vec<i64>) -> i32 {
     let mut current = start;
 
     let (_path, cost) = dijkstra(&start, |pos| -> Vec<(Vector2D, i32)> {
-        get_neighbours(*pos).iter().filter(|neighbour| {
-            let mut map = map.borrow_mut();
-            if !map.contains_key(neighbour) {
-                // Move to position
-                go_to(&mut machine, &map, &mut current, *pos);
-                // Explore neighbour
-                let direction = Direction::from_step(**neighbour - *pos);
-                let status = match step_droid(&mut machine, &mut current, direction) {
-                    Status::Wall => Tile::Wall,
-                    Status::Step => Tile::Empty,
-                    Status::Found => Tile::OxygenSystem
-                };
-                map.insert(**neighbour, status);
-                // println!("Explored neighbour {:?} = {}", neighbour, map.get(neighbour).unwrap().print());
-            }
-            map.get(neighbour).expect("neighbour should have been explored").can_traverse()
-        }).map(|neighbour| (*neighbour, 1)).collect()
+        let mut map = map.borrow_mut();
+        explore_neighbours(&mut machine, &mut map, &mut current, pos).iter().map(|neighbour| (*neighbour, 1)).collect()
     }, |pos| {
         map.borrow().get(pos) == Some(&Tile::OxygenSystem)
     }).expect("could not find oxygen system");
@@ -139,6 +124,25 @@ fn get_neighbours(position: Vector2D) -> Vec<Vector2D> {
         position + Direction::West.step(),
         position + Direction::East.step(),
     ]
+}
+
+fn explore_neighbours(machine: &mut ProgramMachine, map: &mut HashMap<Vector2D, Tile>, current: &mut Vector2D, pos: &Vector2D) -> Vec<Vector2D> {
+    get_neighbours(*pos).iter().filter(|neighbour| {
+        if !map.contains_key(neighbour) {
+            // Move to position
+            go_to(machine, &map, current, *pos);
+            // Explore neighbour
+            let direction = Direction::from_step(**neighbour - *pos);
+            let status = match step_droid(machine, current, direction) {
+                Status::Wall => Tile::Wall,
+                Status::Step => Tile::Empty,
+                Status::Found => Tile::OxygenSystem
+            };
+            map.insert(**neighbour, status);
+            // println!("Explored neighbour {:?} = {}", neighbour, map.get(neighbour).unwrap().print());
+        }
+        map.get(neighbour).expect("neighbour should have been explored").can_traverse()
+    }).cloned().collect()
 }
 
 fn go_to(machine: &mut ProgramMachine, map: &HashMap<Vector2D, Tile>, current: &mut Vector2D, dest: Vector2D) {
