@@ -170,4 +170,28 @@ mod tests {
             vec![5, 2, 4, 3, 2, 1, 3, 3][..]
         );
     }
+
+    #[test]
+    fn test_part2_example1() {
+        assert_eq!(
+            part2(&parse_input("03036732577212944063491565474664")),
+            "84462026"
+        );
+    }
+
+    #[test]
+    fn test_part2_example2() {
+        assert_eq!(
+            part2(&parse_input("02935109699940807407585447034323")),
+            "78725270"
+        );
+    }
+
+    #[test]
+    fn test_part2_example3() {
+        assert_eq!(
+            part2(&parse_input("03081770884921959731165446850517")),
+            "53553731"
+        );
+    }
 }
