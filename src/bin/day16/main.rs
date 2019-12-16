@@ -70,8 +70,20 @@ fn part1(input: &Vec<i32>) -> String {
     output[0..8].iter().map(|x| x.to_string()).collect()
 }
 
-fn part2(input: &Vec<i32>) -> i32 {
-    0
+fn part2(input: &Vec<i32>) -> String {
+    let repeats = 10_000;
+    let offset: usize = input[0..7]
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<String>()
+        .parse()
+        .unwrap();
+    let input: Vec<i32> = repeat(input.clone()).take(repeats).flatten().collect();
+    let output = fft(&input, 100);
+    output[offset..(offset + 8)]
+        .iter()
+        .map(|x| x.to_string())
+        .collect()
 }
 
 #[cfg(test)]
