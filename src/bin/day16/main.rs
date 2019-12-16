@@ -69,9 +69,13 @@ fn fft(input: &Vec<i32>, shift: usize, phases: usize) -> Vec<i32> {
     output
 }
 
+fn digits_to_string(digits: &[i32]) -> String {
+    digits.iter().map(|x| x.to_string()).collect()
+}
+
 fn part1(input: &Vec<i32>) -> String {
     let output = fft(input, 0, 100);
-    output[0..8].iter().map(|x| x.to_string()).collect()
+    digits_to_string(&output[0..8])
 }
 
 fn part2_fft_phase(input: &Vec<i32>) -> Vec<i32> {
@@ -108,7 +112,7 @@ fn part2(input: &Vec<i32>) -> String {
         .take(input_len * repeats - offset)
         .collect();
     let output = part2_fft(&input, 100);
-    output[0..8].iter().map(|x| x.to_string()).collect()
+    digits_to_string(&output[0..8])
 }
 
 #[cfg(test)]
@@ -142,32 +146,32 @@ mod tests {
     #[test]
     fn test_part1_example1() {
         assert_eq!(
-            fft(&parse_input("12345678"), 0, 4),
-            vec![0, 1, 0, 2, 9, 4, 9, 8]
+            digits_to_string(&fft(&parse_input("12345678"), 0, 4)),
+            "01029498"
         );
     }
 
     #[test]
     fn test_part1_example2() {
         assert_eq!(
-            fft(&parse_input("80871224585914546619083218645595"), 0, 100)[0..8],
-            vec![2, 4, 1, 7, 6, 1, 7, 6][..]
+            part1(&parse_input("80871224585914546619083218645595")),
+            "24176176"
         );
     }
 
     #[test]
     fn test_part1_example3() {
         assert_eq!(
-            fft(&parse_input("19617804207202209144916044189917"), 0, 100)[0..8],
-            vec![7, 3, 7, 4, 5, 4, 1, 8][..]
+            part1(&parse_input("19617804207202209144916044189917")),
+            "73745418"
         );
     }
 
     #[test]
     fn test_part1_example4() {
         assert_eq!(
-            fft(&parse_input("69317163492948606335995924319873"), 0, 100)[0..8],
-            vec![5, 2, 4, 3, 2, 1, 3, 3][..]
+            part1(&parse_input("69317163492948606335995924319873")),
+            "52432133"
         );
     }
 
