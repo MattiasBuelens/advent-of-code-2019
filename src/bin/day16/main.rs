@@ -111,6 +111,14 @@ mod tests {
             WavePattern::new(4).take(16).collect::<Vec<i32>>(),
             vec![0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, -1, -1, -1, -1, 0]
         );
+        assert_eq!(
+            WavePattern::new(4).skip(1).take(16).collect::<Vec<i32>>(),
+            vec![0, 0, 1, 1, 1, 1, 0, 0, 0, 0, -1, -1, -1, -1, 0, 0]
+        );
+        assert_eq!(
+            WavePattern::new(4).skip(4).take(16).collect::<Vec<i32>>(),
+            vec![1, 1, 1, 0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0, 0, 1]
+        );
     }
 
     #[test]
