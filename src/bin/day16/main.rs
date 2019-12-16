@@ -47,12 +47,12 @@ impl Iterator for WavePattern {
     }
 }
 
-fn fft_phase(input: &Vec<i32>, shift: usize) -> Vec<i32> {
+fn fft_phase(input: &Vec<i32>) -> Vec<i32> {
     let mut output = input.clone();
     for i in 0..input.len() {
         output[i] = input
             .iter()
-            .zip(WavePattern::new(shift + i + 1).skip(shift))
+            .zip(WavePattern::new(i + 1))
             .map(|(x, y)| x * y)
             .sum::<i32>()
             .abs()
@@ -61,10 +61,10 @@ fn fft_phase(input: &Vec<i32>, shift: usize) -> Vec<i32> {
     output
 }
 
-fn fft(input: &Vec<i32>, shift: usize, phases: usize) -> Vec<i32> {
+fn fft(input: &Vec<i32>, phases: usize) -> Vec<i32> {
     let mut output = input.clone();
     for _ in 0..phases {
-        output = fft_phase(&output, shift);
+        output = fft_phase(&output);
     }
     output
 }
@@ -74,7 +74,7 @@ fn digits_to_string(digits: &[i32]) -> String {
 }
 
 fn part1(input: &Vec<i32>) -> String {
-    let output = fft(input, 0, 100);
+    let output = fft(input, 100);
     digits_to_string(&output[0..8])
 }
 
@@ -146,7 +146,7 @@ mod tests {
     #[test]
     fn test_part1_example1() {
         assert_eq!(
-            digits_to_string(&fft(&parse_input("12345678"), 0, 4)),
+            digits_to_string(&fft(&parse_input("12345678"), 4)),
             "01029498"
         );
     }
