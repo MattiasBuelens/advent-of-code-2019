@@ -80,6 +80,10 @@ fn part1(input: &Vec<i32>) -> String {
 
 fn part2_fft_phase(input: &Vec<i32>) -> Vec<i32> {
     let mut output = input.clone();
+    // When `N/2 < i < N`, the wave pattern degenerates into: [0, 0,... 0, 1, 1,... 1]
+    // where the number of 0's equals `i` and the number of 1's equals `N - i`.
+    // This means the i'th output is the sum of the i'th input and all subsequent elements.
+    // We can compute these sums efficiently by starting from the last one, and working backwards.
     let mut sum = 0;
     for i in (0..input.len()).rev() {
         sum = (sum + input[i]) % 10;
@@ -105,13 +109,19 @@ fn part2(input: &Vec<i32>) -> String {
         .parse()
         .unwrap();
 
+    // The i-th output only depends on input elements from i to the end.
+    // Construct the repeated input from `offset` to `input.len() * repeats`.
     let input_len = input.len();
     let input: Vec<i32> = repeat(input.clone())
         .flatten()
         .skip(offset % input_len)
         .take(input_len * repeats - offset)
         .collect();
+
+    // The offset must be between `N/2` and `N` for the optimization to work.
+    assert!(offset > (input_len * repeats / 2));
     let output = part2_fft(&input, 100);
+
     digits_to_string(&output[0..8])
 }
 
