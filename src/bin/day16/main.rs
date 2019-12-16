@@ -71,6 +71,18 @@ fn fft_phase_left_half(input: &[i32], output: &mut [i32], offset: usize) {
     }
 }
 
+fn fft_phase_right_half(input: &[i32], output: &mut [i32]) {
+    // When `N/2 <= i < N`, the wave pattern degenerates into: [0, 0,... 0, 1, 1,... 1]
+    // where the number of 0's equals `i` and the number of 1's equals `N - i`.
+    // This means the i'th output is the sum of the i'th input and all subsequent elements.
+    // We can compute these sums efficiently by starting from the last one, and working backwards.
+    let mut sum = 0;
+    for i in (0..input.len()).rev() {
+        sum = (sum + input[i]) % 10;
+        output[i] = sum;
+    }
+}
+
 fn fft(input: &Vec<i32>, offset: usize, phases: usize) -> Vec<i32> {
     let mut output = input.clone();
     for _ in 0..phases {
@@ -86,18 +98,6 @@ fn digits_to_string(digits: &[i32]) -> String {
 fn part1(input: &Vec<i32>) -> String {
     let output = fft(input, 0, 100);
     digits_to_string(&output[0..8])
-}
-
-fn fft_phase_right_half(input: &[i32], output: &mut [i32]) {
-    // When `N/2 <= i < N`, the wave pattern degenerates into: [0, 0,... 0, 1, 1,... 1]
-    // where the number of 0's equals `i` and the number of 1's equals `N - i`.
-    // This means the i'th output is the sum of the i'th input and all subsequent elements.
-    // We can compute these sums efficiently by starting from the last one, and working backwards.
-    let mut sum = 0;
-    for i in (0..input.len()).rev() {
-        sum = (sum + input[i]) % 10;
-        output[i] = sum;
-    }
 }
 
 fn part2(input: &Vec<i32>) -> String {
