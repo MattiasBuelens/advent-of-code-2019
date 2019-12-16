@@ -20,9 +20,8 @@ struct WavePattern {
 }
 
 impl WavePattern {
-    fn new(repeat: usize, shift: usize) -> WavePattern {
-        let index = shift % (repeat * 4);
-        WavePattern { index, repeat }
+    fn new(repeat: usize) -> WavePattern {
+        WavePattern { index: 0, repeat }
     }
 }
 
@@ -30,9 +29,13 @@ impl Iterator for WavePattern {
     type Item = i32;
 
     fn next(&mut self) -> Option<Self::Item> {
+        self.nth(0)
+    }
+
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
         // When applying the pattern, skip the very first value exactly once.
         // (In other words, offset the whole pattern left by one.)
-        self.index = (self.index + 1) % (self.repeat * 4);
+        self.index = (self.index + n + 1) % (self.repeat * 4);
         // The base pattern is 0, 1, 0, -1.
         Some(match self.index / self.repeat {
             0 => 0,
@@ -49,7 +52,7 @@ fn fft_phase(input: &Vec<i32>, shift: usize) -> Vec<i32> {
     for i in 0..input.len() {
         output[i] = input
             .iter()
-            .zip(WavePattern::new(shift + i + 1, shift))
+            .zip(WavePattern::new(shift + i + 1).skip(shift))
             .map(|(x, y)| x * y)
             .sum::<i32>()
             .abs()
@@ -97,15 +100,15 @@ mod tests {
     #[test]
     fn test_wave_pattern() {
         assert_eq!(
-            WavePattern::new(1, 0).take(16).collect::<Vec<i32>>(),
+            WavePattern::new(1).take(16).collect::<Vec<i32>>(),
             vec![1, 0, -1, 0, 1, 0, -1, 0, 1, 0, -1, 0, 1, 0, -1, 0]
         );
         assert_eq!(
-            WavePattern::new(2, 0).take(16).collect::<Vec<i32>>(),
+            WavePattern::new(2).take(16).collect::<Vec<i32>>(),
             vec![0, 1, 1, 0, 0, -1, -1, 0, 0, 1, 1, 0, 0, -1, -1, 0]
         );
         assert_eq!(
-            WavePattern::new(4, 0).take(16).collect::<Vec<i32>>(),
+            WavePattern::new(4).take(16).collect::<Vec<i32>>(),
             vec![0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, -1, -1, -1, -1, 0]
         );
     }
