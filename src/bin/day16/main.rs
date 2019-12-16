@@ -20,8 +20,9 @@ struct WavePattern {
 }
 
 impl WavePattern {
-    fn new(repeat: usize) -> WavePattern {
-        WavePattern { index: 0, repeat }
+    fn new(repeat: usize, shift: usize) -> WavePattern {
+        let index = shift % (repeat * 4);
+        WavePattern { index, repeat }
     }
 }
 
@@ -43,12 +44,12 @@ impl Iterator for WavePattern {
     }
 }
 
-fn fft_phase(input: &Vec<i32>) -> Vec<i32> {
+fn fft_phase(input: &Vec<i32>, shift: usize) -> Vec<i32> {
     let mut output = input.clone();
     for i in 0..input.len() {
         output[i] = input
             .iter()
-            .zip(WavePattern::new(i + 1))
+            .zip(WavePattern::new(shift + i + 1, shift))
             .map(|(x, y)| x * y)
             .sum::<i32>()
             .abs()
@@ -57,16 +58,16 @@ fn fft_phase(input: &Vec<i32>) -> Vec<i32> {
     output
 }
 
-fn fft(input: &Vec<i32>, phases: usize) -> Vec<i32> {
+fn fft(input: &Vec<i32>, shift: usize, phases: usize) -> Vec<i32> {
     let mut output = input.clone();
     for _ in 0..phases {
-        output = fft_phase(&output);
+        output = fft_phase(&output, shift);
     }
     output
 }
 
 fn part1(input: &Vec<i32>) -> String {
-    let output = fft(input, 100);
+    let output = fft(input, 0, 100);
     output[0..8].iter().map(|x| x.to_string()).collect()
 }
 
@@ -78,12 +79,15 @@ fn part2(input: &Vec<i32>) -> String {
         .collect::<String>()
         .parse()
         .unwrap();
-    let input: Vec<i32> = repeat(input.clone()).take(repeats).flatten().collect();
-    let output = fft(&input, 100);
-    output[offset..(offset + 8)]
-        .iter()
-        .map(|x| x.to_string())
-        .collect()
+
+    let input_len = input.len();
+    let input: Vec<i32> = repeat(input.clone())
+        .flatten()
+        .skip(offset % input_len)
+        .take(input_len * repeats - offset)
+        .collect();
+    let output = fft(&input, offset, 100);
+    output[0..8].iter().map(|x| x.to_string()).collect()
 }
 
 #[cfg(test)]
@@ -93,15 +97,15 @@ mod tests {
     #[test]
     fn test_wave_pattern() {
         assert_eq!(
-            WavePattern::new(1).take(16).collect::<Vec<i32>>(),
+            WavePattern::new(1, 0).take(16).collect::<Vec<i32>>(),
             vec![1, 0, -1, 0, 1, 0, -1, 0, 1, 0, -1, 0, 1, 0, -1, 0]
         );
         assert_eq!(
-            WavePattern::new(2).take(16).collect::<Vec<i32>>(),
+            WavePattern::new(2, 0).take(16).collect::<Vec<i32>>(),
             vec![0, 1, 1, 0, 0, -1, -1, 0, 0, 1, 1, 0, 0, -1, -1, 0]
         );
         assert_eq!(
-            WavePattern::new(4).take(16).collect::<Vec<i32>>(),
+            WavePattern::new(4, 0).take(16).collect::<Vec<i32>>(),
             vec![0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, -1, -1, -1, -1, 0]
         );
     }
@@ -109,7 +113,7 @@ mod tests {
     #[test]
     fn test_part1_example1() {
         assert_eq!(
-            fft(&parse_input("12345678"), 4),
+            fft(&parse_input("12345678"), 0, 4),
             vec![0, 1, 0, 2, 9, 4, 9, 8]
         );
     }
@@ -117,7 +121,7 @@ mod tests {
     #[test]
     fn test_part1_example2() {
         assert_eq!(
-            fft(&parse_input("80871224585914546619083218645595"), 100)[0..8],
+            fft(&parse_input("80871224585914546619083218645595"), 0, 100)[0..8],
             vec![2, 4, 1, 7, 6, 1, 7, 6][..]
         );
     }
@@ -125,7 +129,7 @@ mod tests {
     #[test]
     fn test_part1_example3() {
         assert_eq!(
-            fft(&parse_input("19617804207202209144916044189917"), 100)[0..8],
+            fft(&parse_input("19617804207202209144916044189917"), 0, 100)[0..8],
             vec![7, 3, 7, 4, 5, 4, 1, 8][..]
         );
     }
@@ -133,7 +137,7 @@ mod tests {
     #[test]
     fn test_part1_example4() {
         assert_eq!(
-            fft(&parse_input("69317163492948606335995924319873"), 100)[0..8],
+            fft(&parse_input("69317163492948606335995924319873"), 0, 100)[0..8],
             vec![5, 2, 4, 3, 2, 1, 3, 3][..]
         );
     }
