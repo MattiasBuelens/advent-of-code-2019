@@ -14,17 +14,41 @@ fn parse_input(input: &str) -> Vec<i32> {
         .collect();
 }
 
+struct WavePattern {
+    index: usize,
+    repeat: usize,
+}
+
+impl WavePattern {
+    fn new(repeat: usize) -> WavePattern {
+        WavePattern { index: 0, repeat }
+    }
+}
+
+impl Iterator for WavePattern {
+    type Item = i32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // When applying the pattern, skip the very first value exactly once.
+        // (In other words, offset the whole pattern left by one.)
+        self.index = (self.index + 1) % (self.repeat * 4);
+        // The base pattern is 0, 1, 0, -1.
+        Some(match self.index / self.repeat {
+            0 => 0,
+            1 => 1,
+            2 => 0,
+            3 => -1,
+            _ => panic!("cannot happen"),
+        })
+    }
+}
+
 fn fft_phase(input: &Vec<i32>) -> Vec<i32> {
     let mut output = input.clone();
     for i in 0..input.len() {
-        let single_pattern: Vec<i32> = vec![0, 1, 0, -1]
-            .into_iter()
-            .flat_map(|x| repeat(x).take(i + 1))
-            .collect();
-        let pattern = repeat(single_pattern).into_iter().flatten().skip(1);
         output[i] = input
             .iter()
-            .zip(pattern)
+            .zip(WavePattern::new(i + 1))
             .map(|(x, y)| x * y)
             .sum::<i32>()
             .abs()
@@ -53,6 +77,22 @@ fn part2(input: &Vec<i32>) -> i32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_wave_pattern() {
+        assert_eq!(
+            WavePattern::new(1).take(16).collect::<Vec<i32>>(),
+            vec![1, 0, -1, 0, 1, 0, -1, 0, 1, 0, -1, 0, 1, 0, -1, 0]
+        );
+        assert_eq!(
+            WavePattern::new(2).take(16).collect::<Vec<i32>>(),
+            vec![0, 1, 1, 0, 0, -1, -1, 0, 0, 1, 1, 0, 0, -1, -1, 0]
+        );
+        assert_eq!(
+            WavePattern::new(4).take(16).collect::<Vec<i32>>(),
+            vec![0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, -1, -1, -1, -1, 0]
+        );
+    }
 
     #[test]
     fn test_part1_example1() {
