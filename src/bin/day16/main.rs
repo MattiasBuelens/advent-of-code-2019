@@ -1,3 +1,4 @@
+use std::char::from_digit;
 use std::iter::*;
 
 fn main() {
@@ -92,7 +93,10 @@ fn fft(input: &Vec<i32>, offset: usize, phases: usize) -> Vec<i32> {
 }
 
 fn digits_to_string(digits: &[i32]) -> String {
-    digits.iter().map(|x| x.to_string()).collect()
+    digits
+        .iter()
+        .map(|x| from_digit(*x as u32, 10).unwrap())
+        .collect()
 }
 
 fn part1(input: &Vec<i32>) -> String {
@@ -102,12 +106,7 @@ fn part1(input: &Vec<i32>) -> String {
 
 fn part2(input: &Vec<i32>) -> String {
     let repeats = 10_000;
-    let offset: usize = input[0..7]
-        .iter()
-        .map(|x| x.to_string())
-        .collect::<String>()
-        .parse()
-        .unwrap();
+    let offset: usize = digits_to_string(&input[0..7]).parse().unwrap();
 
     // The i-th output only depends on input elements from i to the end.
     // Construct the repeated input from `offset` to `input.len() * repeats`.
