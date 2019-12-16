@@ -47,24 +47,34 @@ impl Iterator for WavePattern {
     }
 }
 
-fn fft_phase(input: &Vec<i32>) -> Vec<i32> {
+fn fft_phase(input: &Vec<i32>, offset: usize) -> Vec<i32> {
+    // Split the input in the middle, taking the offset into account.
+    let mid = ((input.len() + offset) / 2).saturating_sub(offset);
+    // Use the general approach for the left half,
+    // and the optimized approach for the right half.
+    // For part 2, we should *only* be using the optimized approach.
     let mut output = input.clone();
-    for i in 0..input.len() {
+    fft_phase_left_half(&input[..], &mut output[0..mid], offset);
+    fft_phase_right_half(&input[mid..], &mut output[mid..]);
+    output
+}
+
+fn fft_phase_left_half(input: &[i32], output: &mut [i32], offset: usize) {
+    for i in 0..output.len() {
         output[i] = input
             .iter()
-            .zip(WavePattern::new(i + 1))
+            .zip(WavePattern::new(offset + i + 1).skip(offset))
             .map(|(x, y)| x * y)
             .sum::<i32>()
             .abs()
             % 10;
     }
-    output
 }
 
-fn fft(input: &Vec<i32>, phases: usize) -> Vec<i32> {
+fn fft(input: &Vec<i32>, offset: usize, phases: usize) -> Vec<i32> {
     let mut output = input.clone();
     for _ in 0..phases {
-        output = fft_phase(&output);
+        output = fft_phase(&output, offset);
     }
     output
 }
@@ -74,13 +84,12 @@ fn digits_to_string(digits: &[i32]) -> String {
 }
 
 fn part1(input: &Vec<i32>) -> String {
-    let output = fft(input, 100);
+    let output = fft(input, 0, 100);
     digits_to_string(&output[0..8])
 }
 
-fn part2_fft_phase(input: &Vec<i32>) -> Vec<i32> {
-    let mut output = input.clone();
-    // When `N/2 < i < N`, the wave pattern degenerates into: [0, 0,... 0, 1, 1,... 1]
+fn fft_phase_right_half(input: &[i32], output: &mut [i32]) {
+    // When `N/2 <= i < N`, the wave pattern degenerates into: [0, 0,... 0, 1, 1,... 1]
     // where the number of 0's equals `i` and the number of 1's equals `N - i`.
     // This means the i'th output is the sum of the i'th input and all subsequent elements.
     // We can compute these sums efficiently by starting from the last one, and working backwards.
@@ -89,15 +98,6 @@ fn part2_fft_phase(input: &Vec<i32>) -> Vec<i32> {
         sum = (sum + input[i]) % 10;
         output[i] = sum;
     }
-    output
-}
-
-fn part2_fft(input: &Vec<i32>, phases: usize) -> Vec<i32> {
-    let mut output = input.clone();
-    for _ in 0..phases {
-        output = part2_fft_phase(&output);
-    }
-    output
 }
 
 fn part2(input: &Vec<i32>) -> String {
@@ -119,8 +119,8 @@ fn part2(input: &Vec<i32>) -> String {
         .collect();
 
     // The offset must be between `N/2` and `N` for the optimization to work.
-    assert!(offset > (input_len * repeats / 2));
-    let output = part2_fft(&input, 100);
+    assert!(offset >= (input_len * repeats / 2));
+    let output = fft(&input, offset, 100);
 
     digits_to_string(&output[0..8])
 }
@@ -156,7 +156,7 @@ mod tests {
     #[test]
     fn test_part1_example1() {
         assert_eq!(
-            digits_to_string(&fft(&parse_input("12345678"), 4)),
+            digits_to_string(&fft(&parse_input("12345678"), 0, 4)),
             "01029498"
         );
     }
