@@ -74,6 +74,24 @@ fn part1(input: &Vec<i32>) -> String {
     output[0..8].iter().map(|x| x.to_string()).collect()
 }
 
+fn part2_fft_phase(input: &Vec<i32>) -> Vec<i32> {
+    let mut output = input.clone();
+    let mut sum = 0;
+    for i in (0..input.len()).rev() {
+        sum = (sum + input[i]) % 10;
+        output[i] = sum;
+    }
+    output
+}
+
+fn part2_fft(input: &Vec<i32>, phases: usize) -> Vec<i32> {
+    let mut output = input.clone();
+    for _ in 0..phases {
+        output = part2_fft_phase(&output);
+    }
+    output
+}
+
 fn part2(input: &Vec<i32>) -> String {
     let repeats = 10_000;
     let offset: usize = input[0..7]
@@ -89,7 +107,7 @@ fn part2(input: &Vec<i32>) -> String {
         .skip(offset % input_len)
         .take(input_len * repeats - offset)
         .collect();
-    let output = fft(&input, offset, 100);
+    let output = part2_fft(&input, 100);
     output[0..8].iter().map(|x| x.to_string()).collect()
 }
 
