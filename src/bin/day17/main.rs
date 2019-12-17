@@ -201,7 +201,7 @@ fn part2(program: &Vec<i64>) -> i64 {
     // print_grid(&grid);
 
     // compute the path
-    let path = trace_path(&grid);
+    let path = commands_to_string(&trace_path(&grid));
     // println!("{}", path);
 
     // these functions were manually derived from the above path
@@ -232,7 +232,24 @@ fn part2(program: &Vec<i64>) -> i64 {
     output[0]
 }
 
-fn trace_path(grid: &Grid) -> String {
+#[derive(Debug)]
+enum Command {
+    Move(i32),
+    Left,
+    Right,
+}
+
+impl ToString for Command {
+    fn to_string(&self) -> String {
+        match *self {
+            Command::Move(amount) => amount.to_string(),
+            Command::Left => "L".to_string(),
+            Command::Right => "R".to_string(),
+        }
+    }
+}
+
+fn trace_path(grid: &Grid) -> Vec<Command> {
     let (robot_pos, robot_tile) = grid
         .iter()
         .find(|(_, tile)| match tile {
@@ -247,7 +264,7 @@ fn trace_path(grid: &Grid) -> String {
         _ => panic!("cannot happen"),
     };
 
-    let mut commands: Vec<String> = Vec::new();
+    let mut commands: Vec<Command> = Vec::new();
     let mut forward = 0;
     loop {
         if grid.get(&(robot_pos + robot_dir.step())) == Some(&Tile::Scaffold) {
@@ -255,19 +272,19 @@ fn trace_path(grid: &Grid) -> String {
         } else if grid.get(&(robot_pos + robot_dir.rotate_left().step())) == Some(&Tile::Scaffold) {
             // turn left
             if forward > 0 {
-                commands.push(forward.to_string());
+                commands.push(Command::Move(forward));
                 forward = 0;
             }
-            commands.push("L".to_string());
+            commands.push(Command::Left);
             robot_dir = robot_dir.rotate_left();
         } else if grid.get(&(robot_pos + robot_dir.rotate_right().step())) == Some(&Tile::Scaffold)
         {
             // turn right
             if forward > 0 {
-                commands.push(forward.to_string());
+                commands.push(Command::Move(forward));
                 forward = 0;
             }
-            commands.push("R".to_string());
+            commands.push(Command::Right);
             robot_dir = robot_dir.rotate_right();
         } else {
             // dead end
@@ -277,10 +294,18 @@ fn trace_path(grid: &Grid) -> String {
         robot_pos += robot_dir.step();
     }
     if forward > 0 {
-        commands.push(forward.to_string());
+        commands.push(Command::Move(forward));
     }
 
-    commands.join(",")
+    commands
+}
+
+fn commands_to_string(commands: &[Command]) -> String {
+    commands
+        .iter()
+        .map(|cmd| cmd.to_string())
+        .collect::<Vec<String>>()
+        .join(",")
 }
 
 fn expect_prompt(machine: &mut ProgramMachine, expected: &str) {
