@@ -98,8 +98,7 @@ type Grid = HashMap<Vector2D, Tile>;
 fn part1(program: &Vec<i64>) -> i32 {
     let mut machine = ProgramMachine::new(program.clone(), vec![]);
     let grid: Grid = read_grid(&mut machine);
-    let intersections = find_intersections(&grid);
-    intersection_alignment(&intersections)
+    intersection_alignment(&grid)
 }
 
 fn read_grid(machine: &mut ProgramMachine) -> Grid {
@@ -149,6 +148,13 @@ fn parse_grid(s: &str) -> Grid {
     grid
 }
 
+fn intersection_alignment(grid: &Grid) -> i32 {
+    find_intersections(grid)
+        .iter()
+        .map(|pos| pos.x * pos.y)
+        .sum()
+}
+
 fn find_intersections(grid: &Grid) -> Vec<Vector2D> {
     let mut result = Vec::new();
     for (pos, _) in grid {
@@ -157,10 +163,6 @@ fn find_intersections(grid: &Grid) -> Vec<Vector2D> {
         }
     }
     result
-}
-
-fn intersection_alignment(intersections: &Vec<Vector2D>) -> i32 {
-    intersections.iter().map(|pos| pos.x * pos.y).sum()
 }
 
 fn is_intersection(grid: &Grid, pos: Vector2D) -> bool {
@@ -233,7 +235,7 @@ fn part2(program: &Vec<i64>) -> i64 {
 fn trace_path(grid: &Grid) -> String {
     let (robot_pos, robot_tile) = grid
         .iter()
-        .find(|(_, tile)| match **tile {
+        .find(|(_, tile)| match tile {
             Tile::Robot(_) => true,
             _ => false,
         })
@@ -313,7 +315,7 @@ mod tests {
     #[test]
     fn test_part1_example1() {
         assert_eq!(
-            intersection_alignment(&find_intersections(&parse_grid(include_str!("example1")))),
+            intersection_alignment(&parse_grid(include_str!("example1"))),
             76
         );
     }
