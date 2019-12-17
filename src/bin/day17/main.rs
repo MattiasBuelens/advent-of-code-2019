@@ -318,7 +318,7 @@ fn find_functions(path: &[Command]) -> Option<Functions> {
         if commands_to_string(a).len() > 20 {
             break; // function is too long
         }
-        let a_parts: Vec<Vec<Command>> = split_vec(path, a)
+        let a_parts: Vec<&[Command]> = split_vec(path, a)
             .into_iter()
             .filter(|x| !x.is_empty())
             .collect();
@@ -329,21 +329,21 @@ fn find_functions(path: &[Command]) -> Option<Functions> {
             if commands_to_string(b).len() > 20 {
                 break; // function is too long
             }
-            let b_parts: Vec<Vec<Command>> = a_parts
+            let b_parts: Vec<&[Command]> = a_parts
                 .iter()
                 .flat_map(|part| split_vec(part, b))
                 .filter(|x| !x.is_empty())
                 .collect();
-            let c = &b_parts[0];
+            let c = b_parts[0];
             if commands_to_string(c).len() > 20 {
                 continue; // function is too long
             }
             // C: must cover all parts left over by A and B
-            if b_parts.iter().all(|part| part == c) {
+            if b_parts.iter().all(|part| part == &c) {
                 return Some(Functions {
                     a: Vec::from(a),
                     b: Vec::from(b),
-                    c: c.clone(),
+                    c: Vec::from(c),
                 });
             }
         }
@@ -351,18 +351,18 @@ fn find_functions(path: &[Command]) -> Option<Functions> {
     None
 }
 
-fn split_vec<T: Eq + Clone + std::fmt::Debug>(input: &[T], sep: &[T]) -> Vec<Vec<T>> {
-    let mut result: Vec<Vec<T>> = Vec::new();
+fn split_vec<'a, T: Eq>(input: &'a [T], sep: &[T]) -> Vec<&'a [T]> {
+    let mut result: Vec<&[T]> = Vec::new();
     let mut i = 0;
     'outer: while i <= input.len() {
         for j in i..input.len() {
             if input[j..].starts_with(sep) {
-                result.push(Vec::from(&input[i..j]));
+                result.push(&input[i..j]);
                 i = j + sep.len();
                 continue 'outer;
             }
         }
-        result.push(Vec::from(&input[i..]));
+        result.push(&input[i..]);
         break;
     }
     result
