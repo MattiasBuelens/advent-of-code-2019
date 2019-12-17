@@ -201,24 +201,21 @@ fn part2(program: &Vec<i64>) -> i64 {
     // print_grid(&grid);
 
     // compute the path
-    let path = commands_to_string(&trace_path(&grid));
-    // println!("{}", path);
+    let path = trace_path(&grid);
 
-    // these functions were manually derived from the above path
-    let a = "L,6,R,12,L,6";
-    let b = "R,12,L,10,L,4,L,6";
-    let c = "L,10,L,10,L,4,L,6";
-    let main = path.replace(a, "A").replace(b, "B").replace(c, "C");
+    // find functions to cover the path
+    let functions = find_functions(&path).expect("failed to find functions");
+    let main = build_main(&path, &functions);
 
-    // prompts
+    // fill in the prompts
     expect_prompt(&mut machine, "Main:\n");
     input_string(&mut machine, &main);
     expect_prompt(&mut machine, "Function A:\n");
-    input_string(&mut machine, &a);
+    input_string(&mut machine, &commands_to_string(&functions.a));
     expect_prompt(&mut machine, "Function B:\n");
-    input_string(&mut machine, &b);
+    input_string(&mut machine, &commands_to_string(&functions.b));
     expect_prompt(&mut machine, "Function C:\n");
-    input_string(&mut machine, &c);
+    input_string(&mut machine, &commands_to_string(&functions.c));
     expect_prompt(&mut machine, "Continuous video feed?\n");
     input_string(&mut machine, "n");
 
@@ -232,7 +229,7 @@ fn part2(program: &Vec<i64>) -> i64 {
     output[0]
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
 enum Command {
     Move(i32),
     Left,
@@ -306,6 +303,88 @@ fn commands_to_string(commands: &[Command]) -> String {
         .map(|cmd| cmd.to_string())
         .collect::<Vec<String>>()
         .join(",")
+}
+
+struct Functions {
+    a: Vec<Command>,
+    b: Vec<Command>,
+    c: Vec<Command>,
+}
+
+fn find_functions(path: &[Command]) -> Option<Functions> {
+    // A: break up the path somewhere
+    for a_len in 1..=path.len() {
+        let a = &path[0..a_len];
+        if commands_to_string(a).len() > 20 {
+            break; // function is too long
+        }
+        let a_parts: Vec<Vec<Command>> = split_vec(path, a)
+            .into_iter()
+            .filter(|x| !x.is_empty())
+            .collect();
+        // B: break up the first part that was broken up by A
+        let b_part = &a_parts[0];
+        for b_len in 1..=b_part.len() {
+            let b = &b_part[0..b_len];
+            if commands_to_string(b).len() > 20 {
+                break; // function is too long
+            }
+            let b_parts: Vec<Vec<Command>> = a_parts
+                .iter()
+                .flat_map(|part| split_vec(part, b))
+                .filter(|x| !x.is_empty())
+                .collect();
+            let c = &b_parts[0];
+            if commands_to_string(c).len() > 20 {
+                continue; // function is too long
+            }
+            // C: must cover all parts left over by A and B
+            if b_parts.iter().all(|part| part == c) {
+                return Some(Functions {
+                    a: Vec::from(a),
+                    b: Vec::from(b),
+                    c: c.clone(),
+                });
+            }
+        }
+    }
+    None
+}
+
+fn split_vec<T: Eq + Clone + std::fmt::Debug>(input: &[T], sep: &[T]) -> Vec<Vec<T>> {
+    let mut result: Vec<Vec<T>> = Vec::new();
+    let mut i = 0;
+    'outer: while i <= input.len() {
+        for j in i..input.len() {
+            if input[j..].starts_with(sep) {
+                result.push(Vec::from(&input[i..j]));
+                i = j + sep.len();
+                continue 'outer;
+            }
+        }
+        result.push(Vec::from(&input[i..]));
+        break;
+    }
+    result
+}
+
+fn build_main(mut path: &[Command], functions: &Functions) -> String {
+    let mut result: Vec<&str> = Vec::new();
+    while path.len() > 0 {
+        if path.starts_with(&functions.a) {
+            result.push("A");
+            path = &path[functions.a.len()..];
+        } else if path.starts_with(&functions.b) {
+            result.push("B");
+            path = &path[functions.b.len()..];
+        } else if path.starts_with(&functions.c) {
+            result.push("C");
+            path = &path[functions.c.len()..];
+        } else {
+            panic!("failed to match path with a function");
+        }
+    }
+    result.into_iter().collect::<Vec<&str>>().join(",")
 }
 
 fn expect_prompt(machine: &mut ProgramMachine, expected: &str) {
