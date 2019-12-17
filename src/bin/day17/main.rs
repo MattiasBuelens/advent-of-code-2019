@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use advent_of_code_2019::input::parse_list;
-use advent_of_code_2019::intcode::{Machine, ProgramMachine};
+use advent_of_code_2019::intcode::{Machine, ProgramMachine, StepResult};
 use advent_of_code_2019::vector2d::Vector2D;
 
 fn main() {
@@ -35,6 +35,24 @@ impl Direction {
             Direction::Down => Vector2D { x: 0, y: 1 },
             Direction::Left => Vector2D { x: -1, y: 0 },
             Direction::Right => Vector2D { x: 1, y: 0 },
+        }
+    }
+
+    fn rotate_left(&self) -> Direction {
+        match *self {
+            Direction::Up => Direction::Left,
+            Direction::Left => Direction::Down,
+            Direction::Down => Direction::Right,
+            Direction::Right => Direction::Up,
+        }
+    }
+
+    fn rotate_right(&self) -> Direction {
+        match *self {
+            Direction::Up => Direction::Right,
+            Direction::Right => Direction::Down,
+            Direction::Down => Direction::Left,
+            Direction::Left => Direction::Up,
         }
     }
 
@@ -80,7 +98,6 @@ type Grid = HashMap<Vector2D, Tile>;
 fn part1(program: &Vec<i64>) -> i32 {
     let mut machine = ProgramMachine::new(program.clone(), vec![]);
     let grid: Grid = read_grid(&mut machine);
-    // print_grid(&grid);
     let intersections = find_intersections(&grid);
     intersection_alignment(&intersections)
 }
@@ -89,19 +106,25 @@ fn read_grid(machine: &mut ProgramMachine) -> Grid {
     let mut grid: Grid = HashMap::new();
     let mut y = 0;
     let mut x = 0;
+    let mut halt_on_next_newline = false;
     loop {
         match machine.run_to_output() {
             Some(value) => match value as u8 as char {
                 '\n' => {
+                    if halt_on_next_newline {
+                        break;
+                    }
+                    halt_on_next_newline = true;
                     x = 0;
                     y += 1;
                 }
                 _ => {
+                    halt_on_next_newline = false;
                     grid.insert(Vector2D::new(x, y), Tile::parse(value as u8 as char));
                     x += 1;
                 }
             },
-            None => break,
+            None => panic!("unexpected halt"),
         };
     }
     grid
@@ -166,8 +189,121 @@ fn print_grid(grid: &Grid) {
     }
 }
 
-fn part2(program: &Vec<i64>) -> i32 {
-    0
+fn part2(program: &Vec<i64>) -> i64 {
+    let mut program = program.clone();
+    program[0] = 2;
+    let mut machine = ProgramMachine::new(program, vec![]);
+
+    // start grid
+    let grid: Grid = read_grid(&mut machine);
+    // print_grid(&grid);
+
+    // compute the path
+    let path = trace_path(&grid);
+    // println!("{}", path);
+
+    // these functions were manually derived from the above path
+    let a = "L,6,R,12,L,6";
+    let b = "R,12,L,10,L,4,L,6";
+    let c = "L,10,L,10,L,4,L,6";
+    let main = path.replace(a, "A").replace(b, "B").replace(c, "C");
+
+    // prompts
+    expect_prompt(&mut machine, "Main:\n");
+    input_string(&mut machine, &main);
+    expect_prompt(&mut machine, "Function A:\n");
+    input_string(&mut machine, &a);
+    expect_prompt(&mut machine, "Function B:\n");
+    input_string(&mut machine, &b);
+    expect_prompt(&mut machine, "Function C:\n");
+    input_string(&mut machine, &c);
+    expect_prompt(&mut machine, "Continuous video feed?\n");
+    input_string(&mut machine, "n");
+
+    // final grid
+    let grid: Grid = read_grid(&mut machine);
+    // print_grid(&grid);
+
+    // collected dust
+    let output = machine.run();
+    assert_eq!(output.len(), 1);
+    output[0]
+}
+
+fn trace_path(grid: &Grid) -> String {
+    let (robot_pos, robot_tile) = grid
+        .iter()
+        .find(|(_, tile)| match **tile {
+            Tile::Robot(_) => true,
+            _ => false,
+        })
+        .expect("robot not found");
+
+    let mut robot_pos = *robot_pos;
+    let mut robot_dir = match *robot_tile {
+        Tile::Robot(dir) => dir,
+        _ => panic!("cannot happen"),
+    };
+
+    let mut commands: Vec<String> = Vec::new();
+    let mut forward = 0;
+    loop {
+        if grid.get(&(robot_pos + robot_dir.step())) == Some(&Tile::Scaffold) {
+            // continue forward
+        } else if grid.get(&(robot_pos + robot_dir.rotate_left().step())) == Some(&Tile::Scaffold) {
+            // turn left
+            if forward > 0 {
+                commands.push(forward.to_string());
+                forward = 0;
+            }
+            commands.push("L".to_string());
+            robot_dir = robot_dir.rotate_left();
+        } else if grid.get(&(robot_pos + robot_dir.rotate_right().step())) == Some(&Tile::Scaffold)
+        {
+            // turn right
+            if forward > 0 {
+                commands.push(forward.to_string());
+                forward = 0;
+            }
+            commands.push("R".to_string());
+            robot_dir = robot_dir.rotate_right();
+        } else {
+            // dead end
+            break;
+        }
+        forward += 1;
+        robot_pos += robot_dir.step();
+    }
+    if forward > 0 {
+        commands.push(forward.to_string());
+    }
+
+    commands.join(",")
+}
+
+fn expect_prompt(machine: &mut ProgramMachine, expected: &str) {
+    let output = read_string(machine);
+    assert_eq!(output, expected);
+}
+
+fn read_string(machine: &mut ProgramMachine) -> String {
+    let mut output = String::new();
+    loop {
+        match machine.step() {
+            StepResult::Ok => {}
+            StepResult::Output(value) => output.push(value as u8 as char),
+            StepResult::NeedInput => break,
+            StepResult::Halt => panic!("unexpected halt"),
+        }
+    }
+    output
+}
+
+fn input_string(machine: &mut ProgramMachine, input: &str) {
+    for byte in input.bytes() {
+        machine.add_input(byte as i64);
+    }
+    machine.add_input('\n' as u8 as i64);
 }
 
 #[cfg(test)]
