@@ -84,28 +84,28 @@ fn print_grid(grid: &Grid, robots: &Vec<Vector2D>) {
 }
 
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]
-struct Node(Vector2D, String);
+struct NodeSingle(Vector2D, String);
 
 fn part1(grid: &Grid, start: &Vector2D) -> i32 {
     let all_keys = get_all_keys(grid);
-    let start_node = Node(*start, String::new());
+    let start_node = NodeSingle(*start, String::new());
     let (_, cost) = dijkstra(
         &start_node,
-        |Node(pos, keys)| {
+        |NodeSingle(pos, keys)| {
             get_neighbours(*pos)
                 .iter()
                 .filter_map(|neighbour| match grid.get(neighbour) {
                     Some(Tile::Key(letter)) => {
-                        Some((Node(*neighbour, add_key(keys.clone(), *letter)), 1))
+                        Some((NodeSingle(*neighbour, add_key(keys.clone(), *letter)), 1))
                     }
                     Some(tile) if can_traverse(tile, keys) => {
-                        Some((Node(*neighbour, keys.clone()), 1))
+                        Some((NodeSingle(*neighbour, keys.clone()), 1))
                     }
                     _ => None,
                 })
                 .collect::<Vec<_>>()
         },
-        |Node(_, keys)| keys.len() == all_keys.len(),
+        |NodeSingle(_, keys)| keys.len() == all_keys.len(),
     )
     .expect("could not find a path to all keys");
 
