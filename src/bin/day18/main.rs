@@ -110,25 +110,25 @@ fn get_neighbours(position: Vector2D) -> Vec<Vector2D> {
 
 fn get_successors_single(grid: &Grid, pos: &Vector2D, keys: &String) -> Vec<NodeSingle> {
     get_neighbours(*pos)
-        .iter()
-        .filter_map(|neighbour| match grid.get(neighbour) {
-            Some(Tile::Key(letter)) => Some(NodeSingle(*neighbour, add_key(keys.clone(), *letter))),
-            Some(tile) if can_traverse(tile, keys) => Some(NodeSingle(*neighbour, keys.clone())),
+        .into_iter()
+        .filter_map(|neighbour| match grid.get(&neighbour) {
+            Some(Tile::Key(letter)) => Some(NodeSingle(neighbour, add_key(keys.clone(), *letter))),
+            Some(tile) if can_traverse(tile, keys) => Some(NodeSingle(neighbour, keys.clone())),
             _ => None,
         })
-        .collect::<Vec<_>>()
+        .collect()
 }
 
 fn get_all_keys(grid: &Grid) -> String {
-    let mut keys = grid
+    let mut keys: Vec<char> = grid
         .values()
         .filter_map(|tile| match *tile {
             Tile::Key(letter) => Some(letter),
             _ => None,
         })
-        .collect::<Vec<char>>();
+        .collect();
     keys.sort();
-    keys.iter().collect()
+    keys.into_iter().collect()
 }
 
 fn add_key(mut keys: String, letter: char) -> String {
