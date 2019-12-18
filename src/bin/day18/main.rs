@@ -167,4 +167,17 @@ mod tests {
         let (grid, start) = parse_grid(include_str!("example3"));
         assert_eq!(part1(&grid, &start), 132);
     }
+
+    #[test]
+    #[ignore] // FIXME
+    fn test_part1_example4() {
+        let (grid, start) = parse_grid(include_str!("example4"));
+        assert_eq!(part1(&grid, &start), 136);
+    }
+
+    #[test]
+    fn test_part1_example5() {
+        let (grid, start) = parse_grid(include_str!("example5"));
+        assert_eq!(part1(&grid, &start), 81);
+    }
 }
