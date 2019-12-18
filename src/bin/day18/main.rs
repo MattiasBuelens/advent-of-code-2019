@@ -5,9 +5,9 @@ use pathfinding::directed::dijkstra::dijkstra;
 use advent_of_code_2019::vector2d::Vector2D;
 
 fn main() {
-    let (grid, start) = parse_grid(include_str!("input"));
-    println!("Answer to part 1: {}", part1(&grid, &start));
-    println!("Answer to part 2: {}", part2(&grid, &start));
+    let (grid, starts) = parse_grid(include_str!("input"));
+    println!("Answer to part 1: {}", part1(&grid, &starts[0]));
+    println!("Answer to part 2: {}", part2(&grid, &starts[0]));
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
@@ -41,16 +41,16 @@ impl Tile {
 
 type Grid = HashMap<Vector2D, Tile>;
 
-fn parse_grid(input: &str) -> (Grid, Vector2D) {
+fn parse_grid(input: &str) -> (Grid, Vec<Vector2D>) {
     let mut grid = HashMap::new();
-    let mut start = None;
+    let mut starts = Vec::new();
     let mut y = 0;
     for line in input.trim().lines() {
         let mut x = 0;
         for cell in line.chars() {
             let pos = Vector2D::new(x, y);
             if cell == '@' {
-                start = Some(pos);
+                starts.push(pos);
                 grid.insert(pos, Tile::Open);
             } else {
                 grid.insert(pos, Tile::parse(cell));
@@ -59,10 +59,10 @@ fn parse_grid(input: &str) -> (Grid, Vector2D) {
         }
         y += 1;
     }
-    (grid, start.unwrap())
+    (grid, starts)
 }
 
-fn print_grid(grid: &Grid, you: &Vector2D) {
+fn print_grid(grid: &Grid, robots: &Vec<Vector2D>) {
     let min_x = grid.keys().min_by_key(|pos| pos.x).unwrap().x;
     let min_y = grid.keys().min_by_key(|pos| pos.y).unwrap().y;
     let max_x = grid.keys().max_by_key(|pos| pos.x).unwrap().x;
@@ -71,7 +71,7 @@ fn print_grid(grid: &Grid, you: &Vector2D) {
         let mut line = String::new();
         for x in min_x..=max_x {
             let pos = Vector2D::new(x, y);
-            if pos == *you {
+            if robots.contains(&pos) {
                 line.push('@');
             } else {
                 line.push(grid.get(&pos).unwrap().print());
@@ -158,31 +158,31 @@ mod tests {
 
     #[test]
     fn test_part1_example1() {
-        let (grid, start) = parse_grid(include_str!("example1"));
-        assert_eq!(part1(&grid, &start), 8);
+        let (grid, starts) = parse_grid(include_str!("example1"));
+        assert_eq!(part1(&grid, &starts[0]), 8);
     }
 
     #[test]
     fn test_part1_example2() {
-        let (grid, start) = parse_grid(include_str!("example2"));
-        assert_eq!(part1(&grid, &start), 86);
+        let (grid, starts) = parse_grid(include_str!("example2"));
+        assert_eq!(part1(&grid, &starts[0]), 86);
     }
 
     #[test]
     fn test_part1_example3() {
-        let (grid, start) = parse_grid(include_str!("example3"));
-        assert_eq!(part1(&grid, &start), 132);
+        let (grid, starts) = parse_grid(include_str!("example3"));
+        assert_eq!(part1(&grid, &starts[0]), 132);
     }
 
     #[test]
     fn test_part1_example4() {
-        let (grid, start) = parse_grid(include_str!("example4"));
-        assert_eq!(part1(&grid, &start), 136);
+        let (grid, starts) = parse_grid(include_str!("example4"));
+        assert_eq!(part1(&grid, &starts[0]), 136);
     }
 
     #[test]
     fn test_part1_example5() {
-        let (grid, start) = parse_grid(include_str!("example5"));
-        assert_eq!(part1(&grid, &start), 81);
+        let (grid, starts) = parse_grid(include_str!("example5"));
+        assert_eq!(part1(&grid, &starts[0]), 81);
     }
 }
