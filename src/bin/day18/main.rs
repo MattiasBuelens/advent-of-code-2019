@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use pathfinding::directed::dijkstra::dijkstra;
+use pathfinding::directed::bfs::bfs;
 
 use advent_of_code_2019::vector2d::Vector2D;
 
@@ -86,17 +86,17 @@ fn print_grid(grid: &Grid, robots: &Vec<Vector2D>) {
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]
 struct NodeSingle(Vector2D, String);
 
-fn part1(grid: &Grid, start: &Vector2D) -> i32 {
+fn part1(grid: &Grid, start: &Vector2D) -> usize {
     let all_keys = get_all_keys(grid);
     let start_node = NodeSingle(*start, String::new());
-    let (_, cost) = dijkstra(
+    let path = bfs(
         &start_node,
         |NodeSingle(pos, keys)| get_successors_single(grid, pos, keys),
         |NodeSingle(_, keys)| keys.len() == all_keys.len(),
     )
     .expect("could not find a path to all keys");
 
-    cost
+    (path.len() - 1)
 }
 
 fn get_neighbours(position: Vector2D) -> Vec<Vector2D> {
@@ -108,16 +108,12 @@ fn get_neighbours(position: Vector2D) -> Vec<Vector2D> {
     ]
 }
 
-fn get_successors_single(grid: &Grid, pos: &Vector2D, keys: &String) -> Vec<(NodeSingle, i32)> {
+fn get_successors_single(grid: &Grid, pos: &Vector2D, keys: &String) -> Vec<NodeSingle> {
     get_neighbours(*pos)
         .iter()
         .filter_map(|neighbour| match grid.get(neighbour) {
-            Some(Tile::Key(letter)) => {
-                Some((NodeSingle(*neighbour, add_key(keys.clone(), *letter)), 1))
-            }
-            Some(tile) if can_traverse(tile, keys) => {
-                Some((NodeSingle(*neighbour, keys.clone()), 1))
-            }
+            Some(Tile::Key(letter)) => Some(NodeSingle(*neighbour, add_key(keys.clone(), *letter))),
+            Some(tile) if can_traverse(tile, keys) => Some(NodeSingle(*neighbour, keys.clone())),
             _ => None,
         })
         .collect::<Vec<_>>()
@@ -155,10 +151,10 @@ fn can_traverse(tile: &Tile, owned_keys: &str) -> bool {
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]
 struct NodeMulti(Vec<Vector2D>, Option<usize>, String);
 
-fn part2(grid: &Grid, starts: &Vec<Vector2D>) -> i32 {
+fn part2(grid: &Grid, starts: &Vec<Vector2D>) -> usize {
     let all_keys = get_all_keys(&grid);
     let start_node = NodeMulti(starts.clone(), None, String::new());
-    let (_, cost) = dijkstra(
+    let path = bfs(
         &start_node,
         |NodeMulti(positions, active_robot, keys)| {
             match *active_robot {
@@ -179,7 +175,7 @@ fn part2(grid: &Grid, starts: &Vec<Vector2D>) -> i32 {
     )
     .expect("could not find a path to all keys");
 
-    cost
+    (path.len() - 1)
 }
 
 fn get_successors_multi(
@@ -187,10 +183,10 @@ fn get_successors_multi(
     positions: &Vec<Vector2D>,
     robot_index: usize,
     keys: &String,
-) -> Vec<(NodeMulti, i32)> {
+) -> Vec<NodeMulti> {
     get_successors_single(grid, &positions[robot_index], keys)
         .into_iter()
-        .map(|(NodeSingle(new_pos, new_keys), cost)| {
+        .map(|NodeSingle(new_pos, new_keys)| {
             let new_positions = replace_pos(positions.clone(), robot_index, new_pos);
             let new_active_robot = if &new_keys == keys {
                 // We have not yet picked up a new key. Keep this robot active until it does.
@@ -199,7 +195,7 @@ fn get_successors_multi(
                 // We picked up a new key. Deactivate this robot, so any other robot can continue.
                 None
             };
-            (NodeMulti(new_positions, new_active_robot, new_keys), cost)
+            NodeMulti(new_positions, new_active_robot, new_keys)
         })
         .collect()
 }
