@@ -1,6 +1,6 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
-use pathfinding::directed::dijkstra::dijkstra_all;
+use pathfinding::directed::dijkstra::dijkstra;
 
 use advent_of_code_2019::vector2d::Vector2D;
 
@@ -83,45 +83,48 @@ fn print_grid(grid: &Grid, you: &Vector2D) {
 
 fn part1(grid: &Grid, start: &Vector2D) -> i32 {
     // print_grid(grid, start);
-    let owned_keys: HashSet<char> = HashSet::new();
-    let result = get_least_steps(grid, start, &owned_keys);
+    let result = get_least_steps(grid, start);
     result
 }
 
-fn get_least_steps(grid: &Grid, start: &Vector2D, owned_keys: &HashSet<char>) -> i32 {
-    let distances = get_distances_from(grid, start, &owned_keys);
-    let mut best: Option<i32> = None;
-    for (pos, (_, distance)) in distances.iter() {
-        if let Some(Tile::Key(letter)) = grid.get(pos) {
-            if !owned_keys.contains(letter) {
-                // Found a key that we don't have yet.
-                // Pick it up and continue from here.
-                let mut owned_keys = owned_keys.clone();
-                owned_keys.insert(*letter);
-                let result = *distance + get_least_steps(grid, pos, &owned_keys);
-                best = Some(best.map_or(result, |best| best.min(result)));
-            }
-        }
-    }
-    // If we already own all keys, then `best` will be `None` and we don't need to go anywhere else.
-    best.unwrap_or(0)
-}
+#[derive(Debug, Eq, PartialEq, Hash, Clone)]
+struct Node(Vector2D, String);
 
-fn get_distances_from(
-    grid: &Grid,
-    start: &Vector2D,
-    owned_keys: &HashSet<char>,
-) -> HashMap<Vector2D, (Vector2D, i32)> {
-    dijkstra_all(start, |pos| {
-        get_neighbours(*pos)
-            .iter()
-            .filter(|neighbour| {
-                grid.get(neighbour)
-                    .map_or(false, |tile| can_traverse(tile, owned_keys))
-            })
-            .map(|neighbour| (*neighbour, 1))
-            .collect::<Vec<_>>()
-    })
+fn get_least_steps(grid: &Grid, start_pos: &Vector2D) -> i32 {
+    let all_keys = grid
+        .values()
+        .filter_map(|tile| match *tile {
+            Tile::Key(letter) => Some(letter),
+            _ => None,
+        })
+        .collect::<String>();
+    let start = Node(*start_pos, String::new());
+    let (_, cost) = dijkstra(
+        &start,
+        |Node(pos, keys)| {
+            get_neighbours(*pos)
+                .iter()
+                .filter_map(|neighbour| match grid.get(neighbour) {
+                    Some(Tile::Key(letter)) => {
+                        let mut keys = keys.clone();
+                        if !keys.contains(&letter.to_string()) {
+                            let idx = keys.chars().position(|c| *letter < c).unwrap_or(keys.len());
+                            keys.insert(idx, *letter);
+                        }
+                        Some((Node(*neighbour, keys), 1))
+                    }
+                    Some(tile) if can_traverse(tile, keys) => {
+                        Some((Node(*neighbour, keys.clone()), 1))
+                    }
+                    _ => None,
+                })
+                .collect::<Vec<_>>()
+        },
+        |Node(_, keys)| keys.len() == all_keys.len(),
+    )
+    .expect("could not find a path to all keys");
+
+    cost
 }
 
 fn get_neighbours(position: Vector2D) -> Vec<Vector2D> {
@@ -133,12 +136,12 @@ fn get_neighbours(position: Vector2D) -> Vec<Vector2D> {
     ]
 }
 
-fn can_traverse(tile: &Tile, owned_keys: &HashSet<char>) -> bool {
+fn can_traverse(tile: &Tile, owned_keys: &str) -> bool {
     match *tile {
         Tile::Open => true,
         Tile::Wall => false,
         Tile::Key(_) => true,
-        Tile::Door(letter) => owned_keys.contains(&letter.to_ascii_lowercase()),
+        Tile::Door(letter) => owned_keys.contains(&letter.to_ascii_lowercase().to_string()),
     }
 }
 
@@ -169,7 +172,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // FIXME
     fn test_part1_example4() {
         let (grid, start) = parse_grid(include_str!("example4"));
         assert_eq!(part1(&grid, &start), 136);
