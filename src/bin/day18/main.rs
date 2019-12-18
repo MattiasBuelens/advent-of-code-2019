@@ -81,16 +81,10 @@ fn print_grid(grid: &Grid, you: &Vector2D) {
     }
 }
 
-fn part1(grid: &Grid, start: &Vector2D) -> i32 {
-    // print_grid(grid, start);
-    let result = get_least_steps(grid, start);
-    result
-}
-
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]
 struct Node(Vector2D, String);
 
-fn get_least_steps(grid: &Grid, start_pos: &Vector2D) -> i32 {
+fn part1(grid: &Grid, start: &Vector2D) -> i32 {
     let all_keys = grid
         .values()
         .filter_map(|tile| match *tile {
@@ -98,9 +92,9 @@ fn get_least_steps(grid: &Grid, start_pos: &Vector2D) -> i32 {
             _ => None,
         })
         .collect::<String>();
-    let start = Node(*start_pos, String::new());
+    let start_node = Node(*start, String::new());
     let (_, cost) = dijkstra(
-        &start,
+        &start_node,
         |Node(pos, keys)| {
             get_neighbours(*pos)
                 .iter()
