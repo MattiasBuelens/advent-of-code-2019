@@ -91,20 +91,7 @@ fn part1(grid: &Grid, start: &Vector2D) -> i32 {
     let start_node = NodeSingle(*start, String::new());
     let (_, cost) = dijkstra(
         &start_node,
-        |NodeSingle(pos, keys)| {
-            get_neighbours(*pos)
-                .iter()
-                .filter_map(|neighbour| match grid.get(neighbour) {
-                    Some(Tile::Key(letter)) => {
-                        Some((NodeSingle(*neighbour, add_key(keys.clone(), *letter)), 1))
-                    }
-                    Some(tile) if can_traverse(tile, keys) => {
-                        Some((NodeSingle(*neighbour, keys.clone()), 1))
-                    }
-                    _ => None,
-                })
-                .collect::<Vec<_>>()
-        },
+        |NodeSingle(pos, keys)| get_successors_single(grid, pos, keys),
         |NodeSingle(_, keys)| keys.len() == all_keys.len(),
     )
     .expect("could not find a path to all keys");
@@ -119,6 +106,21 @@ fn get_neighbours(position: Vector2D) -> Vec<Vector2D> {
         position + Vector2D::new(1, 0),
         position + Vector2D::new(-1, 0),
     ]
+}
+
+fn get_successors_single(grid: &Grid, pos: &Vector2D, keys: &String) -> Vec<(NodeSingle, i32)> {
+    get_neighbours(*pos)
+        .iter()
+        .filter_map(|neighbour| match grid.get(neighbour) {
+            Some(Tile::Key(letter)) => {
+                Some((NodeSingle(*neighbour, add_key(keys.clone(), *letter)), 1))
+            }
+            Some(tile) if can_traverse(tile, keys) => {
+                Some((NodeSingle(*neighbour, keys.clone()), 1))
+            }
+            _ => None,
+        })
+        .collect::<Vec<_>>()
 }
 
 fn get_all_keys(grid: &Grid) -> String {
