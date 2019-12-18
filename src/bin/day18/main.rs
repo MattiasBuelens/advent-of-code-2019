@@ -49,6 +49,7 @@ fn parse_grid(input: &str) -> (Grid, Vector2D) {
             let pos = Vector2D::new(x, y);
             if cell == '@' {
                 start = Some(pos);
+                grid.insert(pos, Tile::Open);
             } else {
                 grid.insert(pos, Tile::parse(cell));
             }
