@@ -85,13 +85,7 @@ fn print_grid(grid: &Grid, you: &Vector2D) {
 struct Node(Vector2D, String);
 
 fn part1(grid: &Grid, start: &Vector2D) -> i32 {
-    let all_keys = grid
-        .values()
-        .filter_map(|tile| match *tile {
-            Tile::Key(letter) => Some(letter),
-            _ => None,
-        })
-        .collect::<String>();
+    let all_keys = get_all_keys(grid);
     let start_node = Node(*start, String::new());
     let (_, cost) = dijkstra(
         &start_node,
@@ -100,12 +94,7 @@ fn part1(grid: &Grid, start: &Vector2D) -> i32 {
                 .iter()
                 .filter_map(|neighbour| match grid.get(neighbour) {
                     Some(Tile::Key(letter)) => {
-                        let mut keys = keys.clone();
-                        if !keys.contains(&letter.to_string()) {
-                            let idx = keys.chars().position(|c| *letter < c).unwrap_or(keys.len());
-                            keys.insert(idx, *letter);
-                        }
-                        Some((Node(*neighbour, keys), 1))
+                        Some((Node(*neighbour, add_key(keys.clone(), *letter)), 1))
                     }
                     Some(tile) if can_traverse(tile, keys) => {
                         Some((Node(*neighbour, keys.clone()), 1))
@@ -128,6 +117,26 @@ fn get_neighbours(position: Vector2D) -> Vec<Vector2D> {
         position + Vector2D::new(1, 0),
         position + Vector2D::new(-1, 0),
     ]
+}
+
+fn get_all_keys(grid: &Grid) -> String {
+    let mut keys = grid
+        .values()
+        .filter_map(|tile| match *tile {
+            Tile::Key(letter) => Some(letter),
+            _ => None,
+        })
+        .collect::<Vec<char>>();
+    keys.sort();
+    keys.iter().collect()
+}
+
+fn add_key(mut keys: String, letter: char) -> String {
+    if !keys.contains(&letter.to_string()) {
+        let idx = keys.chars().position(|c| letter < c).unwrap_or(keys.len());
+        keys.insert(idx, letter);
+    }
+    keys
 }
 
 fn can_traverse(tile: &Tile, owned_keys: &str) -> bool {
