@@ -7,7 +7,9 @@ use advent_of_code_2019::vector2d::Vector2D;
 fn main() {
     let (grid, starts) = parse_grid(include_str!("input"));
     println!("Answer to part 1: {}", part1(&grid, &starts[0]));
-    println!("Answer to part 2: {}", part2(&grid, &starts[0]));
+
+    let (grid, starts) = split_grid(&grid, starts[0]);
+    println!("Answer to part 2: {}", part2(&grid, &starts));
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
@@ -148,8 +150,69 @@ fn can_traverse(tile: &Tile, owned_keys: &str) -> bool {
     }
 }
 
-fn part2(grid: &Grid, start: &Vector2D) -> i32 {
-    0
+#[derive(Debug, Eq, PartialEq, Hash, Clone)]
+struct NodeMulti(Vec<Vector2D>, String);
+
+fn part2(grid: &Grid, starts: &Vec<Vector2D>) -> i32 {
+    let all_keys = get_all_keys(&grid);
+    let start_node = NodeMulti(starts.clone(), String::new());
+    let (_, cost) = dijkstra(
+        &start_node,
+        |NodeMulti(positions, keys)| {
+            positions
+                .iter()
+                .zip(0..)
+                .flat_map(|(pos, i)| {
+                    get_neighbours(*pos)
+                        .iter()
+                        .filter_map(|neighbour| match grid.get(neighbour) {
+                            Some(Tile::Key(letter)) => Some((
+                                NodeMulti(
+                                    replace_pos(positions.clone(), i, *neighbour),
+                                    add_key(keys.clone(), *letter),
+                                ),
+                                1,
+                            )),
+                            Some(tile) if can_traverse(tile, keys) => Some((
+                                NodeMulti(
+                                    replace_pos(positions.clone(), i, *neighbour),
+                                    keys.clone(),
+                                ),
+                                1,
+                            )),
+                            _ => None,
+                        })
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>()
+        },
+        |NodeMulti(_, keys)| keys.len() == all_keys.len(),
+    )
+    .expect("could not find a path to all keys");
+
+    cost
+}
+
+fn split_grid(grid: &Grid, start: Vector2D) -> (Grid, Vec<Vector2D>) {
+    let mut grid = grid.clone();
+    // place extra walls
+    grid.insert(start, Tile::Wall);
+    for neighbour in get_neighbours(start) {
+        grid.insert(neighbour, Tile::Wall);
+    }
+    // update start positions
+    let starts = vec![
+        start + Vector2D::new(-1, -1),
+        start + Vector2D::new(-1, 1),
+        start + Vector2D::new(1, -1),
+        start + Vector2D::new(1, 1),
+    ];
+    (grid, starts)
+}
+
+fn replace_pos(mut positions: Vec<Vector2D>, i: usize, new_pos: Vector2D) -> Vec<Vector2D> {
+    positions[i] = new_pos;
+    positions
 }
 
 #[cfg(test)]
@@ -184,5 +247,29 @@ mod tests {
     fn test_part1_example5() {
         let (grid, starts) = parse_grid(include_str!("example5"));
         assert_eq!(part1(&grid, &starts[0]), 81);
+    }
+
+    #[test]
+    fn test_part2_example6() {
+        let (grid, starts) = parse_grid(include_str!("example6"));
+        assert_eq!(part2(&grid, &starts), 8);
+    }
+
+    #[test]
+    fn test_part2_example7() {
+        let (grid, starts) = parse_grid(include_str!("example7"));
+        assert_eq!(part2(&grid, &starts), 24);
+    }
+
+    #[test]
+    fn test_part2_example8() {
+        let (grid, starts) = parse_grid(include_str!("example8"));
+        assert_eq!(part2(&grid, &starts), 32);
+    }
+
+    #[test]
+    fn test_part2_example9() {
+        let (grid, starts) = parse_grid(include_str!("example9"));
+        assert_eq!(part2(&grid, &starts), 72);
     }
 }
