@@ -153,46 +153,55 @@ fn can_traverse(tile: &Tile, owned_keys: &str) -> bool {
 }
 
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]
-struct NodeMulti(Vec<Vector2D>, String);
+struct NodeMulti(Vec<Vector2D>, Option<usize>, String);
 
 fn part2(grid: &Grid, starts: &Vec<Vector2D>) -> i32 {
     let all_keys = get_all_keys(&grid);
-    let start_node = NodeMulti(starts.clone(), String::new());
+    let start_node = NodeMulti(starts.clone(), None, String::new());
     let (_, cost) = dijkstra(
         &start_node,
-        |NodeMulti(positions, keys)| {
-            positions
-                .iter()
-                .zip(0..)
-                .flat_map(|(pos, i)| {
-                    get_neighbours(*pos)
-                        .iter()
-                        .filter_map(|neighbour| match grid.get(neighbour) {
-                            Some(Tile::Key(letter)) => Some((
-                                NodeMulti(
-                                    replace_pos(positions.clone(), i, *neighbour),
-                                    add_key(keys.clone(), *letter),
-                                ),
-                                1,
-                            )),
-                            Some(tile) if can_traverse(tile, keys) => Some((
-                                NodeMulti(
-                                    replace_pos(positions.clone(), i, *neighbour),
-                                    keys.clone(),
-                                ),
-                                1,
-                            )),
-                            _ => None,
-                        })
-                        .collect::<Vec<_>>()
-                })
-                .collect::<Vec<_>>()
+        |NodeMulti(positions, active_robot, keys)| {
+            match *active_robot {
+                Some(i) => {
+                    // A robot is active. Only move this single robot, until it picks up a new key.
+                    get_successors_multi(grid, positions, i, keys)
+                }
+                None => {
+                    // No robot is active, because the previously active robot just picked up a new key.
+                    // Try to move forward with any of the robots.
+                    (0..positions.len())
+                        .flat_map(|i| get_successors_multi(grid, positions, i, keys))
+                        .collect()
+                }
+            }
         },
-        |NodeMulti(_, keys)| keys.len() == all_keys.len(),
+        |NodeMulti(_, _, keys)| keys.len() == all_keys.len(),
     )
     .expect("could not find a path to all keys");
 
     cost
+}
+
+fn get_successors_multi(
+    grid: &Grid,
+    positions: &Vec<Vector2D>,
+    robot_index: usize,
+    keys: &String,
+) -> Vec<(NodeMulti, i32)> {
+    get_successors_single(grid, &positions[robot_index], keys)
+        .into_iter()
+        .map(|(NodeSingle(new_pos, new_keys), cost)| {
+            let new_positions = replace_pos(positions.clone(), robot_index, new_pos);
+            let new_active_robot = if &new_keys == keys {
+                // We have not yet picked up a new key. Keep this robot active until it does.
+                Some(robot_index)
+            } else {
+                // We picked up a new key. Deactivate this robot, so any other robot can continue.
+                None
+            };
+            (NodeMulti(new_positions, new_active_robot, new_keys), cost)
+        })
+        .collect()
 }
 
 fn split_grid(grid: &Grid, start: Vector2D) -> (Grid, Vec<Vector2D>) {
