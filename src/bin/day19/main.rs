@@ -10,26 +10,53 @@ fn main() {
     println!("Answer to part 2: {}", part2(&program));
 }
 
-fn part1(input: &Vec<i64>) -> usize {
-    let mut map: HashSet<Vector2D> = HashSet::new();
+type Beam = HashSet<Vector2D>;
+
+fn part1(program: &Vec<i64>) -> usize {
+    let mut beam: Beam = HashSet::new();
     for y in 0..50 {
         for x in 0..50 {
-            let mut machine = ProgramMachine::new(input.clone(), vec![]);
-            machine.add_input(x as i64);
-            machine.add_input(y as i64);
-            match machine.run_to_output() {
-                Some(1) => {
-                    map.insert(Vector2D::new(x, y));
-                }
-                Some(0) => {}
-                output => panic!("unexpected output {:?}", output),
-            };
+            let pos = Vector2D::new(x, y);
+            if in_beam(&program, &pos) {
+                beam.insert(pos);
+            }
         }
     }
-    map.len()
+    // print_beam(&beam);
+    beam.len()
 }
 
-fn part2(input: &Vec<i64>) -> i32 {
+fn in_beam(program: &Vec<i64>, pos: &Vector2D) -> bool {
+    let mut machine = ProgramMachine::new(program.clone(), vec![]);
+    machine.add_input(pos.x as i64);
+    machine.add_input(pos.y as i64);
+    match machine.run_to_output() {
+        Some(1) => true,
+        Some(0) => false,
+        output => panic!("unexpected output {:?}", output),
+    }
+}
+
+fn print_beam(beam: &Beam) {
+    let min_x = beam.iter().min_by_key(|pos| pos.x).unwrap().x;
+    let min_y = beam.iter().min_by_key(|pos| pos.y).unwrap().y;
+    let max_x = beam.iter().max_by_key(|pos| pos.x).unwrap().x;
+    let max_y = beam.iter().max_by_key(|pos| pos.y).unwrap().y;
+    for y in min_y..=max_y {
+        let mut line = String::new();
+        for x in min_x..=max_x {
+            let pos = Vector2D::new(x, y);
+            if beam.contains(&pos) {
+                line.push('#');
+            } else {
+                line.push('.');
+            }
+        }
+        println!("{}", line);
+    }
+}
+
+fn part2(program: &Vec<i64>) -> i32 {
     0
 }
 
