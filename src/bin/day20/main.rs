@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 use std::iter::FromIterator;
 
-use crate::Tile::Portal;
+use pathfinding::directed::bfs::bfs;
+
 use advent_of_code_2019::vector2d::Vector2D;
 
 fn main() {
     let maze: Maze = parse_input(include_str!("input"));
-    println!("{:?}", maze);
     println!("Answer to part 1: {}", part1(&maze));
     println!("Answer to part 2: {}", part2(&maze));
 }
@@ -52,14 +52,15 @@ fn parse_input(input: &str) -> Maze {
         for step in get_steps() {
             let other_pos = pos + step;
             if let Some(&other_letter) = portal_letters.get(&other_pos) {
-                if let Some(Tile::Open) = grid.get(&(pos - step)) {
+                let open_pos = pos - step;
+                if let Some(Tile::Open) = grid.get(&open_pos) {
                     let name = if pos.manhattan_distance() < other_pos.manhattan_distance() {
                         String::from_iter(vec![letter, other_letter])
                     } else {
                         String::from_iter(vec![other_letter, letter])
                     };
-                    grid.insert(pos, Portal(name.clone()));
-                    portals.entry(name).or_default().push(pos)
+                    grid.insert(pos, Tile::Portal(name.clone()));
+                    portals.entry(name).or_default().push(open_pos);
                 }
             }
         }
@@ -76,8 +77,39 @@ fn get_steps() -> Vec<Vector2D> {
     ]
 }
 
-fn part1(maze: &Maze) -> i32 {
-    0
+fn get_successors(maze: &Maze, pos: Vector2D) -> Vec<Vector2D> {
+    get_steps()
+        .iter()
+        .filter_map(|&step| {
+            let other = pos + step;
+            match maze.grid.get(&other) {
+                Some(Tile::Open) => Some(other),
+                Some(Tile::Portal(name)) => {
+                    let portal = maze.portals.get(name).unwrap();
+                    if portal.len() == 2 {
+                        let other = if pos == portal[0] {
+                            portal[1]
+                        } else {
+                            portal[0]
+                        };
+                        Some(other)
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            }
+        })
+        .collect()
+}
+
+fn part1(maze: &Maze) -> usize {
+    let start = maze.portals.get("AA").unwrap()[0];
+    let goal = maze.portals.get("ZZ").unwrap()[0];
+    let path = bfs(&start, |&pos| get_successors(maze, pos), |pos| pos == &goal)
+        .expect("could not find a path to goal portal");
+
+    (path.len() - 1)
 }
 
 fn part2(maze: &Maze) -> i32 {
