@@ -44,12 +44,12 @@ fn parse_input(input: &str) -> Vec<Color> {
 fn part1(input: &Vec<Color>, width: usize, height: usize) -> usize {
     let layers = input.chunks_exact(width * height);
     let min_layer = layers
-        .min_by_key(|layer| layer.iter().filter(|x| **x == Color::BLACK).count())
+        .min_by_key(|layer| layer.iter().filter(|&x| x == &Color::BLACK).count())
         .expect("expected at least one layer");
-    let one_digits = min_layer.iter().filter(|x| **x == Color::WHITE).count();
+    let one_digits = min_layer.iter().filter(|&x| x == &Color::WHITE).count();
     let two_digits = min_layer
         .iter()
-        .filter(|x| **x == Color::TRANSPARENT)
+        .filter(|&x| x == &Color::TRANSPARENT)
         .count();
     one_digits * two_digits
 }
@@ -62,7 +62,7 @@ fn part2(input: &Vec<Color>, width: usize, height: usize) -> Vec<Vec<Color>> {
             let color = input
                 .chunks_exact(width * height)
                 .map(|layer| layer[y * width + x])
-                .find(|color| *color != Color::TRANSPARENT)
+                .find(|&color| color != Color::TRANSPARENT)
                 .expect(&format!("missing color at {},{}", x, y));
             row.push(color);
         }

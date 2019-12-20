@@ -14,8 +14,8 @@ fn main() {
 
 fn run_chain(program: &Vec<i64>, phase_settings: &Vec<i64>) -> i64 {
     let mut signal = 0;
-    for phase_setting in phase_settings {
-        let mut machine = ProgramMachine::new(program.clone(), vec![*phase_setting]);
+    for &phase_setting in phase_settings {
+        let mut machine = ProgramMachine::new(program.clone(), vec![phase_setting]);
         machine.add_input(signal);
         let output = machine.run_to_output();
         signal = output.expect("expected an output");
@@ -35,8 +35,8 @@ fn part1(program: &Vec<i64>) -> i64 {
 fn run_feedback_loop(program: &Vec<i64>, phase_settings: &Vec<i64>) -> i64 {
     let machines: Vec<Box<dyn Machine>> = phase_settings
         .iter()
-        .map(|setting| {
-            let machine = ProgramMachine::new(program.clone(), vec![*setting]);
+        .map(|&setting| {
+            let machine = ProgramMachine::new(program.clone(), vec![setting]);
             Box::new(machine) as Box<dyn Machine>
         })
         .collect();

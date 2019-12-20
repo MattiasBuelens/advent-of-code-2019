@@ -17,7 +17,7 @@ fn part1(program: &Vec<i64>) -> i64 {
     // For each test, it will run an output instruction indicating how far the result of the test
     // was from the expected value, where 0 means the test was successful.
     assert!(
-        output.iter().all(|x| *x == 0),
+        output.iter().all(|&x| x == 0),
         "all outputs except the last one should be 0"
     );
 

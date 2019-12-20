@@ -7,7 +7,7 @@ fn main() {
 }
 
 fn part1(masses: &Vec<u32>) -> u32 {
-    masses.iter().map(|x| get_fuel_part1(*x)).sum()
+    masses.iter().map(|&x| get_fuel_part1(x)).sum()
 }
 
 fn get_fuel_part1(mass: u32) -> u32 {
@@ -15,7 +15,7 @@ fn get_fuel_part1(mass: u32) -> u32 {
 }
 
 fn part2(masses: &Vec<u32>) -> u32 {
-    masses.iter().map(|x| get_fuel_part2(*x)).sum()
+    masses.iter().map(|&x| get_fuel_part2(x)).sum()
 }
 
 fn get_fuel_part2(mut mass: u32) -> u32 {

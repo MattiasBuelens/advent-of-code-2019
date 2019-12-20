@@ -64,7 +64,7 @@ fn part1(program: &Vec<i64>) -> usize {
             Tile::from_id(tile_id as i32),
         );
     }
-    screen.values().filter(|tile| **tile == Tile::BLOCK).count()
+    screen.values().filter(|&tile| tile == &Tile::BLOCK).count()
 }
 
 fn part2(program: &Vec<i64>, interactive: bool) -> i64 {
@@ -145,11 +145,11 @@ fn read_joystick() -> i64 {
 fn compute_joystick(screen: &Screen) -> i64 {
     let (paddle_pos, _) = screen
         .iter()
-        .find(|(_, tile)| **tile == Tile::PADDLE)
+        .find(|&(_, tile)| tile == &Tile::PADDLE)
         .expect("paddle must exist");
     let (ball_pos, _) = screen
         .iter()
-        .find(|(_, tile)| **tile == Tile::BALL)
+        .find(|&(_, tile)| tile == &Tile::BALL)
         .expect("ball must exist");
     match ball_pos.x.cmp(&paddle_pos.x) {
         Ordering::Equal => 0,   // neutral

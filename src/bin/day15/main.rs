@@ -133,28 +133,28 @@ fn explore_neighbours(
     machine: &mut ProgramMachine,
     map: &mut HashMap<Vector2D, Tile>,
     current: &mut Vector2D,
-    pos: &Vector2D,
+    &pos: &Vector2D,
 ) -> Vec<(Vector2D, i32)> {
-    get_neighbours(*pos)
+    get_neighbours(pos)
         .iter()
-        .filter(|neighbour| {
-            if !map.contains_key(neighbour) {
+        .filter(|&&neighbour| {
+            if !map.contains_key(&neighbour) {
                 // Move to position
-                go_to(machine, &map, current, *pos);
+                go_to(machine, &map, current, pos);
                 // Explore neighbour
-                let direction = Direction::from_step(**neighbour - *pos);
+                let direction = Direction::from_step(neighbour - pos);
                 let status = match step_droid(machine, current, direction) {
                     Status::Wall => Tile::Wall,
                     Status::Step => Tile::Empty,
                     Status::Found => Tile::OxygenSystem,
                 };
-                map.insert(**neighbour, status);
+                map.insert(neighbour, status);
             }
-            map.get(neighbour)
+            map.get(&neighbour)
                 .expect("neighbour should have been explored")
                 .can_traverse()
         })
-        .map(|neighbour| (*neighbour, 1))
+        .map(|&neighbour| (neighbour, 1))
         .collect()
 }
 
@@ -171,24 +171,24 @@ fn go_to(
     let start = current.clone();
     let (path, _) = astar(
         &start,
-        |pos| -> Vec<(Vector2D, i32)> {
-            get_neighbours(*pos)
+        |&pos| -> Vec<(Vector2D, i32)> {
+            get_neighbours(pos)
                 .iter()
-                .filter(|x| map.get(&x).unwrap_or(&Tile::Wall).can_traverse())
-                .map(|x| (*x, 1))
+                .filter(|&x| map.get(x).unwrap_or(&Tile::Wall).can_traverse())
+                .map(|&x| (x, 1))
                 .collect()
         },
-        |pos| (*pos - dest).manhattan_distance(),
-        |pos| *pos == dest,
+        |&pos| (pos - dest).manhattan_distance(),
+        |&pos| pos == dest,
     )
     .expect("could not find path");
 
     debug_assert_eq!(path[0], start);
-    for pos in path.iter().skip(1) {
-        let direction = Direction::from_step(*pos - *current);
+    for &pos in path.iter().skip(1) {
+        let direction = Direction::from_step(pos - *current);
         let status = step_droid(machine, current, direction);
         assert_ne!(status, Status::Wall);
-        *current = *pos;
+        *current = pos;
     }
     assert_eq!(*current, dest);
 }
@@ -246,22 +246,22 @@ fn part2(program: &Vec<i64>) -> i32 {
 
     let (oxygen_pos, _) = map
         .iter()
-        .find(|(_, tile)| **tile == Tile::OxygenSystem)
+        .find(|&(_, tile)| tile == &Tile::OxygenSystem)
         .expect("no oxygen system found");
 
     // Find the distance from the oxygen system to all explorable tiles
     let distances: HashMap<Vector2D, (Vector2D, i32)> =
-        dijkstra_all(oxygen_pos, |pos| -> Vec<(Vector2D, i32)> {
-            get_neighbours(*pos)
+        dijkstra_all(oxygen_pos, |&pos| -> Vec<(Vector2D, i32)> {
+            get_neighbours(pos)
                 .iter()
-                .filter(|neighbour| map.get(neighbour).unwrap_or(&Tile::Wall).can_traverse())
-                .map(|neighbour| (*neighbour, 1))
+                .filter(|&neighbour| map.get(neighbour).unwrap_or(&Tile::Wall).can_traverse())
+                .map(|&neighbour| (neighbour, 1))
                 .collect()
         });
 
     // Find the position with the furthest distance from the oxygen system
-    let (_, max_distance) = distances.values().max_by_key(|(_, dist)| dist).unwrap();
-    *max_distance
+    let &(_, max_distance) = distances.values().max_by_key(|(_, dist)| dist).unwrap();
+    max_distance
 }
 
 #[cfg(test)]

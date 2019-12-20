@@ -95,7 +95,7 @@ fn fft(input: &Vec<i32>, offset: usize, phases: usize) -> Vec<i32> {
 fn digits_to_string(digits: &[i32]) -> String {
     digits
         .iter()
-        .map(|x| from_digit(*x as u32, 10).unwrap())
+        .map(|&x| from_digit(x as u32, 10).unwrap())
         .collect()
 }
 

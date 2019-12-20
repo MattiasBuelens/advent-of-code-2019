@@ -35,11 +35,9 @@ fn part1(grid: &Grid) -> usize {
         .expect("expected at least one asteroid")
 }
 
-fn get_visible_asteroids(center: &Vector2D, grid: &Grid) -> HashSet<Vector2D> {
-    let center = *center;
+fn get_visible_asteroids(&center: &Vector2D, grid: &Grid) -> HashSet<Vector2D> {
     let mut visible: HashSet<Vector2D> = HashSet::new();
-    for other in grid {
-        let other = *other;
+    for &other in grid {
         if center == other {
             continue;
         }

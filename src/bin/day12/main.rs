@@ -56,7 +56,7 @@ impl Moon {
     }
 
     fn axis(&self, axis: &Axis) -> MoonAxis {
-        match *axis {
+        match axis {
             Axis::X => MoonAxis::new(self.position.x, self.velocity.x),
             Axis::Y => MoonAxis::new(self.position.y, self.velocity.y),
             Axis::Z => MoonAxis::new(self.position.z, self.velocity.z),

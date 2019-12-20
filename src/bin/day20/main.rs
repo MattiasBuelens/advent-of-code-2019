@@ -152,8 +152,8 @@ fn part2(maze: &Maze) -> usize {
 
     let path = bfs(
         &start,
-        |(pos, level)| get_successors_part2(maze, *pos, *level),
-        |node| node == &goal,
+        |&(pos, level)| get_successors_part2(maze, pos, level),
+        |&node| node == goal,
     )
     .expect("could not find a path to goal portal");
 

@@ -86,9 +86,9 @@ fn print_grid(grid: &Grid, robots: &Vec<Vector2D>) {
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]
 struct NodeSingle(Vector2D, String);
 
-fn part1(grid: &Grid, start: &Vector2D) -> usize {
+fn part1(grid: &Grid, &start: &Vector2D) -> usize {
     let all_keys = get_all_keys(grid);
-    let start_node = NodeSingle(*start, String::new());
+    let start_node = NodeSingle(start, String::new());
     let path = bfs(
         &start_node,
         |NodeSingle(pos, keys)| get_successors_single(grid, pos, keys),
@@ -108,12 +108,12 @@ fn get_neighbours(position: Vector2D) -> Vec<Vector2D> {
     ]
 }
 
-fn get_successors_single(grid: &Grid, pos: &Vector2D, keys: &String) -> Vec<NodeSingle> {
-    get_neighbours(*pos)
+fn get_successors_single(grid: &Grid, &pos: &Vector2D, keys: &String) -> Vec<NodeSingle> {
+    get_neighbours(pos)
         .into_iter()
         .filter_map(|neighbour| match grid.get(&neighbour) {
-            Some(Tile::Key(letter)) => Some(NodeSingle(neighbour, add_key(keys.clone(), *letter))),
-            Some(tile) if can_traverse(tile, keys) => Some(NodeSingle(neighbour, keys.clone())),
+            Some(&Tile::Key(letter)) => Some(NodeSingle(neighbour, add_key(keys.clone(), letter))),
+            Some(&tile) if can_traverse(&tile, keys) => Some(NodeSingle(neighbour, keys.clone())),
             _ => None,
         })
         .collect()
@@ -122,7 +122,7 @@ fn get_successors_single(grid: &Grid, pos: &Vector2D, keys: &String) -> Vec<Node
 fn get_all_keys(grid: &Grid) -> String {
     let mut keys: Vec<char> = grid
         .values()
-        .filter_map(|tile| match *tile {
+        .filter_map(|&tile| match tile {
             Tile::Key(letter) => Some(letter),
             _ => None,
         })
@@ -139,8 +139,8 @@ fn add_key(mut keys: String, letter: char) -> String {
     keys
 }
 
-fn can_traverse(tile: &Tile, owned_keys: &str) -> bool {
-    match *tile {
+fn can_traverse(&tile: &Tile, owned_keys: &str) -> bool {
+    match tile {
         Tile::Open => true,
         Tile::Wall => false,
         Tile::Key(_) => true,
@@ -157,16 +157,16 @@ fn part2(grid: &Grid, starts: &Vec<Vector2D>) -> usize {
     let path = bfs(
         &start_node,
         |NodeMulti(positions, active_robot, keys)| {
-            match *active_robot {
-                Some(i) => {
+            match active_robot {
+                &Some(i) => {
                     // A robot is active. Only move this single robot, until it picks up a new key.
-                    get_successors_multi(grid, positions, i, keys)
+                    get_successors_multi(grid, &positions, i, &keys)
                 }
                 None => {
                     // No robot is active, because the previously active robot just picked up a new key.
                     // Try to move forward with any of the robots.
                     (0..positions.len())
-                        .flat_map(|i| get_successors_multi(grid, positions, i, keys))
+                        .flat_map(|i| get_successors_multi(grid, &positions, i, &keys))
                         .collect()
                 }
             }

@@ -157,9 +157,9 @@ fn intersection_alignment(grid: &Grid) -> i32 {
 
 fn find_intersections(grid: &Grid) -> Vec<Vector2D> {
     let mut result = Vec::new();
-    for (pos, _) in grid {
-        if is_intersection(grid, *pos) {
-            result.push(*pos);
+    for (&pos, _) in grid {
+        if is_intersection(grid, pos) {
+            result.push(pos);
         }
     }
     result
@@ -247,16 +247,15 @@ impl ToString for Command {
 }
 
 fn trace_path(grid: &Grid) -> Vec<Command> {
-    let (robot_pos, robot_tile) = grid
+    let (&robot_pos, &robot_tile) = grid
         .iter()
         .find(|(_, tile)| match tile {
             Tile::Robot(_) => true,
             _ => false,
         })
         .expect("robot not found");
-
-    let mut robot_pos = *robot_pos;
-    let mut robot_dir = match *robot_tile {
+    let mut robot_pos = robot_pos;
+    let mut robot_dir = match robot_tile {
         Tile::Robot(dir) => dir,
         _ => panic!("cannot happen"),
     };

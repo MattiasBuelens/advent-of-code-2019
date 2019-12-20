@@ -110,11 +110,11 @@ fn part2(program: &Vec<i64>) -> i32 {
     corner_tl.x * 10_000 + corner_tl.y
 }
 
-fn fits_square(beam: &Beam, size: i32, corner: &Vector2D) -> bool {
-    beam.contains(corner)
-        && beam.contains(&(*corner - Vector2D::new(0, size - 1)))
-        && beam.contains(&(*corner - Vector2D::new(size - 1, 0)))
-        && beam.contains(&(*corner - Vector2D::new(size - 1, size - 1)))
+fn fits_square(beam: &Beam, size: i32, &corner: &Vector2D) -> bool {
+    beam.contains(&corner)
+        && beam.contains(&(corner - Vector2D::new(0, size - 1)))
+        && beam.contains(&(corner - Vector2D::new(size - 1, 0)))
+        && beam.contains(&(corner - Vector2D::new(size - 1, size - 1)))
 }
 
 #[cfg(test)]
