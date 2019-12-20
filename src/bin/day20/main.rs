@@ -80,7 +80,7 @@ fn get_steps() -> Vec<Vector2D> {
     ]
 }
 
-fn get_successors(maze: &Maze, pos: Vector2D) -> Vec<Vector2D> {
+fn get_successors_part1(maze: &Maze, pos: Vector2D) -> Vec<Vector2D> {
     get_steps()
         .iter()
         .filter_map(|&step| {
@@ -110,14 +110,54 @@ fn get_portal_exit(maze: &Maze, name: &String, pos: &Vector2D) -> Option<Vector2
 fn part1(maze: &Maze) -> usize {
     let start = maze.portals.get("AA").unwrap()[0];
     let goal = maze.portals.get("ZZ").unwrap()[0];
-    let path = bfs(&start, |&pos| get_successors(maze, pos), |pos| pos == &goal)
-        .expect("could not find a path to goal portal");
+    let path = bfs(
+        &start,
+        |&pos| get_successors_part1(maze, pos),
+        |pos| pos == &goal,
+    )
+    .expect("could not find a path to goal portal");
 
     (path.len() - 1)
 }
 
-fn part2(maze: &Maze) -> i32 {
-    0
+fn get_successors_part2(maze: &Maze, pos: Vector2D, level: i32) -> Vec<(Vector2D, i32)> {
+    get_steps()
+        .iter()
+        .filter_map(|&step| {
+            let other = pos + step;
+            match maze.grid.get(&other) {
+                Some(Tile::Open) => Some((other, level)),
+                Some(Tile::Portal(name, outer)) => {
+                    if *outer {
+                        if level == 0 {
+                            None
+                        } else {
+                            get_portal_exit(&maze, &name, &pos).map(|exit| (exit, level - 1))
+                        }
+                    } else {
+                        get_portal_exit(&maze, &name, &pos).map(|exit| (exit, level + 1))
+                    }
+                }
+                _ => None,
+            }
+        })
+        .collect()
+}
+
+fn part2(maze: &Maze) -> usize {
+    let start_pos = maze.portals.get("AA").unwrap()[0];
+    let goal_pos = maze.portals.get("ZZ").unwrap()[0];
+    let start = (start_pos, 0);
+    let goal = (goal_pos, 0);
+
+    let path = bfs(
+        &start,
+        |(pos, level)| get_successors_part2(maze, *pos, *level),
+        |node| node == &goal,
+    )
+    .expect("could not find a path to goal portal");
+
+    (path.len() - 1)
 }
 
 #[cfg(test)]
