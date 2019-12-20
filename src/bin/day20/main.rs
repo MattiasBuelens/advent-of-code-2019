@@ -15,7 +15,7 @@ fn main() {
 enum Tile {
     Open,
     Wall,
-    Portal(String),
+    Portal(String, bool),
 }
 
 #[derive(Debug)]
@@ -48,6 +48,8 @@ fn parse_input(input: &str) -> Maze {
         y += 1;
     }
     let mut portals: HashMap<String, Vec<Vector2D>> = HashMap::new();
+    let max_x = grid.keys().max_by_key(|pos| pos.x).unwrap().x;
+    let max_y = grid.keys().max_by_key(|pos| pos.y).unwrap().y;
     for (&pos, &letter) in &portal_letters {
         for step in get_steps() {
             let other_pos = pos + step;
@@ -59,7 +61,8 @@ fn parse_input(input: &str) -> Maze {
                     } else {
                         String::from_iter(vec![other_letter, letter])
                     };
-                    grid.insert(pos, Tile::Portal(name.clone()));
+                    let outside = pos.x < 2 || pos.y < 2 || pos.x > max_x - 2 || pos.y > max_y - 2;
+                    grid.insert(pos, Tile::Portal(name.clone(), outside));
                     portals.entry(name).or_default().push(open_pos);
                 }
             }
@@ -84,7 +87,7 @@ fn get_successors(maze: &Maze, pos: Vector2D) -> Vec<Vector2D> {
             let other = pos + step;
             match maze.grid.get(&other) {
                 Some(Tile::Open) => Some(other),
-                Some(Tile::Portal(name)) => {
+                Some(Tile::Portal(name, _)) => {
                     let portal = maze.portals.get(name).unwrap();
                     if portal.len() == 2 {
                         let other = if pos == portal[0] {
