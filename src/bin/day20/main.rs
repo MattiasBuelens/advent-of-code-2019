@@ -87,23 +87,24 @@ fn get_successors(maze: &Maze, pos: Vector2D) -> Vec<Vector2D> {
             let other = pos + step;
             match maze.grid.get(&other) {
                 Some(Tile::Open) => Some(other),
-                Some(Tile::Portal(name, _)) => {
-                    let portal = maze.portals.get(name).unwrap();
-                    if portal.len() == 2 {
-                        let other = if pos == portal[0] {
-                            portal[1]
-                        } else {
-                            portal[0]
-                        };
-                        Some(other)
-                    } else {
-                        None
-                    }
-                }
+                Some(Tile::Portal(name, _)) => get_portal_exit(&maze, &name, &pos),
                 _ => None,
             }
         })
         .collect()
+}
+
+fn get_portal_exit(maze: &Maze, name: &String, pos: &Vector2D) -> Option<Vector2D> {
+    let portal = maze.portals.get(name).unwrap();
+    if portal.len() == 2 {
+        Some(if pos == &portal[0] {
+            portal[1]
+        } else {
+            portal[0]
+        })
+    } else {
+        None
+    }
 }
 
 fn part1(maze: &Maze) -> usize {
