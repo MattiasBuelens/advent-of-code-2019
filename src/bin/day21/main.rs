@@ -9,7 +9,7 @@ fn main() {
 
 fn part1(program: &Vec<i64>) -> i64 {
     let mut machine = ProgramMachine::new(program.clone(), vec![]);
-    machine.read_string();
+    assert_eq!(machine.read_line(), "Input instructions:");
 
     // Jump if there is a hole at A, B or C and ground at D
     // J = (!A | !B | !C) & D
@@ -41,7 +41,7 @@ fn part1(program: &Vec<i64>) -> i64 {
 
 fn part2(program: &Vec<i64>) -> i64 {
     let mut machine = ProgramMachine::new(program.clone(), vec![]);
-    machine.read_string();
+    assert_eq!(machine.read_line(), "Input instructions:");
 
     // If there's ground at D (=4) but a hole at E (=5) and H (=8), then we won't be able
     // to move or jump from D.
