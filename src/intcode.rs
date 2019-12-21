@@ -170,6 +170,22 @@ pub trait Machine {
         self.add_input('\n' as u8 as i64);
     }
 
+    fn read_line(&mut self) -> String {
+        let mut output = String::new();
+        loop {
+            match self.step() {
+                StepResult::Ok => {}
+                StepResult::Output(value) => match value as u8 as char {
+                    '\n' => break,
+                    _ => output.push(value as u8 as char),
+                },
+                StepResult::NeedInput => break,
+                StepResult::Halt => panic!("unexpected halt"),
+            }
+        }
+        output
+    }
+
     fn read_string(&mut self) -> String {
         let mut output = String::new();
         loop {
