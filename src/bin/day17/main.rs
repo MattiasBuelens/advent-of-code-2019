@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use advent_of_code_2019::input::parse_list;
-use advent_of_code_2019::intcode::{Machine, ProgramMachine, StepResult};
+use advent_of_code_2019::intcode::{Machine, ProgramMachine};
 use advent_of_code_2019::vector2d::Vector2D;
 
 fn main() {
@@ -209,15 +209,15 @@ fn part2(program: &Vec<i64>) -> i64 {
 
     // fill in the prompts
     expect_prompt(&mut machine, "Main:\n");
-    input_string(&mut machine, &main);
+    machine.add_line(&main);
     expect_prompt(&mut machine, "Function A:\n");
-    input_string(&mut machine, &commands_to_string(&functions.a));
+    machine.add_line(&commands_to_string(&functions.a));
     expect_prompt(&mut machine, "Function B:\n");
-    input_string(&mut machine, &commands_to_string(&functions.b));
+    machine.add_line(&commands_to_string(&functions.b));
     expect_prompt(&mut machine, "Function C:\n");
-    input_string(&mut machine, &commands_to_string(&functions.c));
+    machine.add_line(&commands_to_string(&functions.c));
     expect_prompt(&mut machine, "Continuous video feed?\n");
-    input_string(&mut machine, "n");
+    machine.add_line("n");
 
     // final grid
     let grid: Grid = read_grid(&mut machine);
@@ -387,28 +387,8 @@ fn build_main(mut path: &[Command], functions: &Functions) -> String {
 }
 
 fn expect_prompt(machine: &mut ProgramMachine, expected: &str) {
-    let output = read_string(machine);
+    let output = machine.read_string();
     assert_eq!(output, expected);
-}
-
-fn read_string(machine: &mut ProgramMachine) -> String {
-    let mut output = String::new();
-    loop {
-        match machine.step() {
-            StepResult::Ok => {}
-            StepResult::Output(value) => output.push(value as u8 as char),
-            StepResult::NeedInput => break,
-            StepResult::Halt => panic!("unexpected halt"),
-        }
-    }
-    output
-}
-
-fn input_string(machine: &mut ProgramMachine, input: &str) {
-    for byte in input.bytes() {
-        machine.add_input(byte as i64);
-    }
-    machine.add_input('\n' as u8 as i64);
 }
 
 #[cfg(test)]

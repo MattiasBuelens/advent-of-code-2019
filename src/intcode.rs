@@ -162,6 +162,26 @@ pub trait Machine {
             };
         }
     }
+
+    fn add_line(&mut self, line: &str) {
+        for byte in line.bytes() {
+            self.add_input(byte as i64);
+        }
+        self.add_input('\n' as u8 as i64);
+    }
+
+    fn read_string(&mut self) -> String {
+        let mut output = String::new();
+        loop {
+            match self.step() {
+                StepResult::Ok => {}
+                StepResult::Output(value) => output.push(value as u8 as char),
+                StepResult::NeedInput => break,
+                StepResult::Halt => panic!("unexpected halt"),
+            }
+        }
+        output
+    }
 }
 
 impl<T: DerefMut<Target = dyn Machine>> Machine for T {
