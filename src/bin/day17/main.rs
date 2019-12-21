@@ -208,15 +208,15 @@ fn part2(program: &Vec<i64>) -> i64 {
     let main = build_main(&path, &functions);
 
     // fill in the prompts
-    expect_prompt(&mut machine, "Main:\n");
+    assert_eq!(machine.read_line(), "Main:");
     machine.add_line(&main);
-    expect_prompt(&mut machine, "Function A:\n");
+    assert_eq!(machine.read_line(), "Function A:");
     machine.add_line(&commands_to_string(&functions.a));
-    expect_prompt(&mut machine, "Function B:\n");
+    assert_eq!(machine.read_line(), "Function B:");
     machine.add_line(&commands_to_string(&functions.b));
-    expect_prompt(&mut machine, "Function C:\n");
+    assert_eq!(machine.read_line(), "Function C:");
     machine.add_line(&commands_to_string(&functions.c));
-    expect_prompt(&mut machine, "Continuous video feed?\n");
+    assert_eq!(machine.read_line(), "Continuous video feed?");
     machine.add_line("n");
 
     // final grid
@@ -384,11 +384,6 @@ fn build_main(mut path: &[Command], functions: &Functions) -> String {
         }
     }
     result.into_iter().collect::<Vec<&str>>().join(",")
-}
-
-fn expect_prompt(machine: &mut ProgramMachine, expected: &str) {
-    let output = machine.read_string();
-    assert_eq!(output, expected);
 }
 
 #[cfg(test)]

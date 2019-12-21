@@ -185,19 +185,6 @@ pub trait Machine {
         }
         output
     }
-
-    fn read_string(&mut self) -> String {
-        let mut output = String::new();
-        loop {
-            match self.step() {
-                StepResult::Ok => {}
-                StepResult::Output(value) => output.push(value as u8 as char),
-                StepResult::NeedInput => break,
-                StepResult::Halt => panic!("unexpected halt"),
-            }
-        }
-        output
-    }
 }
 
 impl<T: DerefMut<Target = dyn Machine>> Machine for T {
