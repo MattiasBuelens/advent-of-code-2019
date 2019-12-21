@@ -23,16 +23,11 @@ fn part1(program: &Vec<i64>) -> i64 {
     machine.add_line("NOT T T");
     machine.add_line("AND B T");
     machine.add_line("AND C T");
-    // T = !T
-    // T = T & D
-    // (T == !(A & B & C) & D)
-    machine.add_line("NOT T T");
-    machine.add_line("AND D T");
-    // T = !T
     // J = !T
-    // (J == T)
-    machine.add_line("NOT T T");
+    // J = J & D
+    // (J == !(A & B & C) & D)
     machine.add_line("NOT T J");
+    machine.add_line("AND D J");
     machine.add_line("WALK");
 
     assert_eq!(machine.read_line(), "");
