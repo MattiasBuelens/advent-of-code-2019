@@ -40,14 +40,46 @@ fn part1(program: &Vec<i64>) -> i64 {
     output
 }
 
-fn part2(program: &Vec<i64>) -> i32 {
-    0
-}
+fn part2(program: &Vec<i64>) -> i64 {
+    let mut machine = ProgramMachine::new(program.clone(), vec![]);
+    machine.read_string();
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+    // If there's ground at D (=4) but a hole at E (=5) and H (=8), then we won't be able
+    // to move or jump from D.
+    // Jump if there is a hole at A, B or C and ground at D and ground at either E or H.
+    // J = (!A | !B | !C) & D & (E | H)
+    // J = !(A & B & C) & D & (E | H)
 
-    #[test]
-    fn test_part1_example1() {}
+    // T = !!A
+    // T = T & B
+    // T = T & C
+    // (T == A & B & C)
+    machine.add_line("NOT A T");
+    machine.add_line("NOT T T");
+    machine.add_line("AND B T");
+    machine.add_line("AND C T");
+    // J = !T
+    // J = J & D
+    // (J == !(A & B & C) & D)
+    machine.add_line("NOT T J");
+    machine.add_line("AND D J");
+    // T = !!E
+    // T = T | H
+    // (T == E | H)
+    machine.add_line("NOT E T");
+    machine.add_line("NOT T T");
+    machine.add_line("OR H T");
+    // J = J & T
+    // (J == !(A & B & C) & D & (E | H))
+    machine.add_line("AND T J");
+    machine.add_line("RUN");
+
+    assert_eq!(machine.read_line(), "");
+    assert_eq!(machine.read_line(), "Running...");
+    assert_eq!(machine.read_line(), "");
+
+    let output = machine.run_to_output().unwrap();
+    assert!(output > 255);
+
+    output
 }
