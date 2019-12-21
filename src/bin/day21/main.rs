@@ -15,18 +15,17 @@ fn part1(program: &Vec<i64>) -> i64 {
     // J = (!A | !B | !C) & D
     // J = !(A & B & C) & D
 
-    // T = !!A
-    // T = T & B
-    // T = T & C
-    // (T == A & B & C)
-    machine.add_line("NOT A T");
-    machine.add_line("NOT T T");
-    machine.add_line("AND B T");
-    machine.add_line("AND C T");
-    // J = !T
+    // J = A
+    // J = J & B
+    // J = J & C
+    // (J == A & B & C)
+    machine.add_line("OR A J");
+    machine.add_line("AND B J");
+    machine.add_line("AND C J");
+    // J = !J
     // J = J & D
     // (J == !(A & B & C) & D)
-    machine.add_line("NOT T J");
+    machine.add_line("NOT J J");
     machine.add_line("AND D J");
     machine.add_line("WALK");
 
@@ -50,24 +49,22 @@ fn part2(program: &Vec<i64>) -> i64 {
     // J = (!A | !B | !C) & D & (E | H)
     // J = !(A & B & C) & D & (E | H)
 
-    // T = !!A
-    // T = T & B
-    // T = T & C
-    // (T == A & B & C)
-    machine.add_line("NOT A T");
-    machine.add_line("NOT T T");
-    machine.add_line("AND B T");
-    machine.add_line("AND C T");
-    // J = !T
+    // J = A
+    // J = J & B
+    // J = J & C
+    // (J == A & B & C)
+    machine.add_line("OR A J");
+    machine.add_line("AND B J");
+    machine.add_line("AND C J");
+    // J = !J
     // J = J & D
     // (J == !(A & B & C) & D)
-    machine.add_line("NOT T J");
+    machine.add_line("NOT J J");
     machine.add_line("AND D J");
-    // T = !!E
+    // T = E
     // T = T | H
     // (T == E | H)
-    machine.add_line("NOT E T");
-    machine.add_line("NOT T T");
+    machine.add_line("OR E T");
     machine.add_line("OR H T");
     // J = J & T
     // (J == !(A & B & C) & D & (E | H))
