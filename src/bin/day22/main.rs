@@ -95,27 +95,6 @@ impl Shuffle {
         }
     }
 
-    fn shuffle_slow(&self, deck: Vec<i32>) -> Vec<i32> {
-        let mut new_deck = deck.clone();
-        for i in 0..deck.len() {
-            let new_pos = self.shuffle_pos(deck.len(), i);
-            new_deck[new_pos] = deck[i];
-        }
-        new_deck
-    }
-
-    fn shuffle_pos(&self, deck_length: usize, position: usize) -> usize {
-        match self {
-            &Shuffle::Stack => (deck_length - 1) - position,
-            &Shuffle::Cut(n) => {
-                ((position as isize) + (deck_length as isize) - n) as usize % deck_length
-            }
-            &Shuffle::Inc(n) => {
-                (((n as u128) * (position as u128)) % (deck_length as u128)) as usize
-            }
-        }
-    }
-
     fn as_mul_add(&self, modulo: u128) -> MulAdd {
         match self {
             &Shuffle::Stack => {
@@ -151,18 +130,6 @@ fn shuffle_deck(shuffles: &[Shuffle], deck: Vec<i32>) -> Vec<i32> {
     shuffles
         .iter()
         .fold(deck, |deck, shuffle| shuffle.shuffle(deck))
-}
-
-fn shuffle_deck_slow(shuffles: &[Shuffle], deck: Vec<i32>) -> Vec<i32> {
-    shuffles
-        .iter()
-        .fold(deck, |deck, shuffle| shuffle.shuffle_slow(deck))
-}
-
-fn shuffle_pos(shuffles: &[Shuffle], deck_length: usize, position: usize) -> usize {
-    shuffles.iter().fold(position, |position, shuffle| {
-        shuffle.shuffle_pos(deck_length, position)
-    })
 }
 
 fn reverse_shuffles(shuffles: &[Shuffle], deck_length: usize) -> Vec<Shuffle> {
@@ -228,9 +195,7 @@ mod tests {
         let shuffles = parse_input(input);
         let reversed = reverse_shuffles(&shuffles, deck.len());
         assert_eq!(shuffle_deck(&shuffles, deck.clone()), shuffled);
-        assert_eq!(shuffle_deck_slow(&shuffles, deck.clone()), shuffled);
         assert_eq!(shuffle_deck(&reversed, shuffled.clone()), deck);
-        assert_eq!(shuffle_deck_slow(&reversed, shuffled.clone()), deck);
         assert_eq!(shuffle_with_mul_add(&shuffles, deck), shuffled);
     }
 
