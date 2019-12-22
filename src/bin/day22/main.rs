@@ -4,6 +4,7 @@ use regex::Regex;
 
 use advent_of_code_2019::input::parse_list;
 use lazy_static::lazy_static;
+use modinverse::modinverse;
 
 fn main() {
     let input: Vec<Shuffle> = parse_input(include_str!("input"));
@@ -99,65 +100,12 @@ impl Shuffle {
         }
     }
 
-    fn unshuffle(&self, mut deck: Vec<i32>) -> Vec<i32> {
-        match self {
-            &Shuffle::Stack => {
-                deck.reverse();
-                deck
-            }
-            &Shuffle::Cut(n) => {
-                if n >= 0 {
-                    deck.rotate_right(n as usize);
-                } else {
-                    deck.rotate_left(-n as usize);
-                }
-                deck
-            }
-            &Shuffle::Inc(n) => {
-                let mut new_deck = deck.clone();
-                let mut j: usize = 0;
-                for i in 0..deck.len() {
-                    new_deck[i] = deck[j];
-                    j = (j + n) % deck.len();
-                }
-                new_deck
-            }
-        }
-    }
-
-    fn unshuffle_slow(&self, deck: Vec<i32>) -> Vec<i32> {
-        let mut new_deck = deck.clone();
-        for i in 0..deck.len() {
-            let new_pos = self.unshuffle_pos(deck.len(), i);
-            new_deck[new_pos] = deck[i];
-        }
-        new_deck
-    }
-
-    fn unshuffle_pos(&self, deck_length: usize, position: usize) -> usize {
-        match self {
-            &Shuffle::Stack => (deck_length - 1) - position,
-            &Shuffle::Cut(n) => {
-                let cut_position = if n >= 0 {
-                    deck_length - (n as usize)
-                } else {
-                    -n as usize
-                };
-                if position < cut_position {
-                    position + (deck_length - cut_position)
-                } else {
-                    position - cut_position
-                }
-            }
-            &Shuffle::Inc(n) => {
-                let mut j: usize = 0;
-                for i in 0..deck_length {
-                    if position == j {
-                        return i;
-                    }
-                    j = (j + n) % deck_length;
-                }
-                panic!("failed to unshuffle with increment {}", n);
+    fn reverse(&self, deck_length: usize) -> Shuffle {
+        match *self {
+            Shuffle::Stack => Shuffle::Stack,
+            Shuffle::Cut(n) => Shuffle::Cut(-n),
+            Shuffle::Inc(n) => {
+                Shuffle::Inc(modinverse(n as isize, deck_length as isize).unwrap() as usize)
             }
         }
     }
@@ -181,24 +129,12 @@ fn shuffle_pos(shuffles: &[Shuffle], deck_length: usize, position: usize) -> usi
     })
 }
 
-fn unshuffle_deck(shuffles: &[Shuffle], deck: Vec<i32>) -> Vec<i32> {
+fn reverse_shuffles(shuffles: &[Shuffle], deck_length: usize) -> Vec<Shuffle> {
     shuffles
         .iter()
         .rev()
-        .fold(deck, |deck, shuffle| shuffle.unshuffle(deck))
-}
-
-fn unshuffle_deck_slow(shuffles: &[Shuffle], deck: Vec<i32>) -> Vec<i32> {
-    shuffles
-        .iter()
-        .rev()
-        .fold(deck, |deck, shuffle| shuffle.unshuffle_slow(deck))
-}
-
-fn unshuffle_pos(shuffles: &[Shuffle], deck_length: usize, position: usize) -> usize {
-    shuffles.iter().rev().fold(position, |position, shuffle| {
-        shuffle.unshuffle_pos(deck_length, position)
-    })
+        .map(|shuffle| shuffle.reverse(deck_length))
+        .collect()
 }
 
 fn part1(input: &Vec<Shuffle>) -> usize {
@@ -214,12 +150,13 @@ mod tests {
     use super::*;
 
     fn test_part1(input: &str, shuffled: Vec<i32>) {
-        let shuffles = parse_input(input);
         let deck: Vec<i32> = (0..10).collect();
+        let shuffles = parse_input(input);
+        let reversed = reverse_shuffles(&shuffles, deck.len());
         assert_eq!(shuffle_deck(&shuffles, deck.clone()), shuffled);
         assert_eq!(shuffle_deck_slow(&shuffles, deck.clone()), shuffled);
-        assert_eq!(unshuffle_deck(&shuffles, shuffled.clone()), deck);
-        assert_eq!(unshuffle_deck_slow(&shuffles, shuffled.clone()), deck);
+        assert_eq!(shuffle_deck(&reversed, shuffled.clone()), deck);
+        assert_eq!(shuffle_deck_slow(&reversed, shuffled.clone()), deck);
     }
 
     #[test]
@@ -240,61 +177,5 @@ mod tests {
     #[test]
     fn test_part1_example4() {
         test_part1(include_str!("example4"), vec![9, 2, 5, 8, 1, 4, 7, 0, 3, 6]);
-    }
-
-    fn test_part2(input: &str) {
-        let shuffles = parse_input(input);
-        let deck: Vec<i32> = (0..10).collect();
-        let shuffled = shuffle_deck(&shuffles, deck.clone());
-        let unshuffled = (0..deck.len())
-            .map(|i| unshuffle_pos(&shuffles, deck.len(), i) as i32)
-            .collect::<Vec<_>>();
-        assert_eq!(unshuffled, shuffled);
-    }
-
-    #[test]
-    fn test_part2_example1() {
-        test_part2(include_str!("example1"));
-    }
-
-    #[test]
-    fn test_part2_example2() {
-        test_part2(include_str!("example2"));
-    }
-
-    #[test]
-    fn test_part2_example3() {
-        test_part2(include_str!("example3"));
-    }
-
-    #[test]
-    fn test_part2_example4() {
-        test_part2(include_str!("example4"));
-    }
-
-    #[test]
-    fn test_shuffle_pos() {
-        let shuffles: Vec<Shuffle> = parse_input(include_str!("input"));
-        let deck_length = 10_007;
-        let deck: Vec<i32> = (0..deck_length).collect();
-        let shuffled: Vec<i32> = shuffle_deck(&shuffles, deck.clone());
-        assert_eq!(
-            shuffle_pos(&shuffles, deck_length as usize, 2019),
-            shuffled.iter().position(|&x| x == 2019).unwrap()
-        );
-    }
-
-    #[test]
-    fn test_unshuffle_pos() {
-        let shuffles: Vec<Shuffle> = parse_input(include_str!("input"));
-        let deck_length: usize = 10_007;
-        assert_eq!(
-            unshuffle_pos(
-                &shuffles,
-                deck_length,
-                shuffle_pos(&shuffles, deck_length, 2019)
-            ),
-            2019
-        );
     }
 }
