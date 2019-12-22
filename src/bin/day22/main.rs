@@ -73,7 +73,41 @@ impl Shuffle {
         }
     }
 
-    fn unshuffle(&self, deck_length: usize, position: usize) -> usize {
+    fn shuffle_slow(&self, deck: Vec<i32>) -> Vec<i32> {
+        let mut new_deck = deck.clone();
+        for i in 0..deck.len() {
+            let new_pos = self.shuffle_pos(deck.len(), i);
+            new_deck[new_pos] = deck[i];
+        }
+        new_deck
+    }
+
+    fn shuffle_pos(&self, deck_length: usize, position: usize) -> usize {
+        match self {
+            &Shuffle::Stack => (deck_length - 1) - position,
+            &Shuffle::Cut(n) => {
+                let cut_position = if n >= 0 {
+                    n as usize
+                } else {
+                    deck_length - (-n as usize)
+                };
+                if position < cut_position {
+                    position + (deck_length - cut_position)
+                } else {
+                    position - cut_position
+                }
+            }
+            &Shuffle::Inc(n) => {
+                let mut j: usize = 0;
+                for _ in 0..position {
+                    j = (j + n) % deck_length;
+                }
+                j
+            }
+        }
+    }
+
+    fn unshuffle_pos(&self, deck_length: usize, position: usize) -> usize {
         match self {
             &Shuffle::Stack => (deck_length - 1) - position,
             &Shuffle::Cut(n) => {
@@ -108,9 +142,15 @@ fn shuffle_deck(shuffles: &[Shuffle], deck: Vec<i32>) -> Vec<i32> {
         .fold(deck, |deck, shuffle| shuffle.shuffle(deck))
 }
 
+fn shuffle_deck_slow(shuffles: &[Shuffle], deck: Vec<i32>) -> Vec<i32> {
+    shuffles
+        .iter()
+        .fold(deck, |deck, shuffle| shuffle.shuffle_slow(deck))
+}
+
 fn unshuffle_pos(shuffles: &[Shuffle], deck_length: usize, position: usize) -> usize {
     shuffles.iter().rev().fold(position, |position, shuffle| {
-        shuffle.unshuffle(deck_length, position)
+        shuffle.unshuffle_pos(deck_length, position)
     })
 }
 
@@ -131,6 +171,7 @@ mod tests {
         let shuffles = parse_input(input);
         let deck: Vec<i32> = (0..10).collect();
         assert_eq!(shuffle_deck(&shuffles, deck.clone()), shuffled);
+        assert_eq!(shuffle_deck_slow(&shuffles, deck.clone()), shuffled);
     }
 
     #[test]
