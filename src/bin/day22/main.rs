@@ -100,4 +100,28 @@ mod tests {
             vec![0, 3, 6, 9, 2, 5, 8, 1, 4, 7]
         )
     }
+
+    #[test]
+    fn test_part1_example2() {
+        assert_eq!(
+            shuffle_deck(&parse_input(include_str!("example2")), (0..10).collect()),
+            vec![3, 0, 7, 4, 1, 8, 5, 2, 9, 6]
+        )
+    }
+
+    #[test]
+    fn test_part1_example3() {
+        assert_eq!(
+            shuffle_deck(&parse_input(include_str!("example3")), (0..10).collect()),
+            vec![6, 3, 0, 7, 4, 1, 8, 5, 2, 9]
+        )
+    }
+
+    #[test]
+    fn test_part1_example4() {
+        assert_eq!(
+            shuffle_deck(&parse_input(include_str!("example4")), (0..10).collect()),
+            vec![9, 2, 5, 8, 1, 4, 7, 0, 3, 6]
+        )
+    }
 }
