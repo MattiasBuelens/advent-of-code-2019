@@ -52,14 +52,12 @@ impl Shuffle {
                 deck
             }
             &Shuffle::Cut(n) => {
-                let cut_position = if n >= 0 {
-                    n as usize
+                if n >= 0 {
+                    deck.rotate_left(n as usize);
                 } else {
-                    deck.len() - (-n as usize)
-                };
-                let mut bottom = deck.split_off(cut_position);
-                bottom.extend(deck);
-                bottom
+                    deck.rotate_right(-n as usize);
+                }
+                deck
             }
             &Shuffle::Inc(n) => {
                 let mut new_deck = deck.clone();
@@ -97,13 +95,7 @@ impl Shuffle {
                     position - cut_position
                 }
             }
-            &Shuffle::Inc(n) => {
-                let mut j: usize = 0;
-                for _ in 0..position {
-                    j = (j + n) % deck_length;
-                }
-                j
-            }
+            &Shuffle::Inc(n) => (n * position) % deck_length,
         }
     }
 
@@ -114,14 +106,12 @@ impl Shuffle {
                 deck
             }
             &Shuffle::Cut(n) => {
-                let cut_position = if n >= 0 {
-                    deck.len() - (n as usize)
+                if n >= 0 {
+                    deck.rotate_right(n as usize);
                 } else {
-                    -n as usize
-                };
-                let mut bottom = deck.split_off(cut_position);
-                bottom.extend(deck);
-                bottom
+                    deck.rotate_left(-n as usize);
+                }
+                deck
             }
             &Shuffle::Inc(n) => {
                 let mut new_deck = deck.clone();
