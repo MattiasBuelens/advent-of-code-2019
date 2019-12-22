@@ -146,6 +146,16 @@ fn combine_shuffles(shuffles: &[Shuffle], modulo: u128) -> MulAdd {
     })
 }
 
+fn shuffle_with_mul_add(shuffles: &[Shuffle], deck: Vec<i32>) -> Vec<i32> {
+    let modulo = deck.len() as u128;
+    let mul_add = combine_shuffles(&shuffles, modulo);
+    let mut result: Vec<i32> = deck.clone();
+    for i in 0..deck.len() {
+        result[mul_add.evaluate(i as u128, modulo) as usize] = deck[i];
+    }
+    result
+}
+
 fn part1(input: &Vec<Shuffle>) -> u128 {
     let deck_length = 10_007;
     let mul_add = combine_shuffles(input, deck_length);
@@ -179,16 +189,6 @@ fn part2(input: &Vec<Shuffle>) -> u128 {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn shuffle_with_mul_add(shuffles: &[Shuffle], deck: Vec<i32>) -> Vec<i32> {
-        let modulo = deck.len() as u128;
-        let mul_add = combine_shuffles(&shuffles, modulo);
-        let mut result: Vec<i32> = deck.clone();
-        for i in 0..deck.len() {
-            result[mul_add.evaluate(i as u128, modulo) as usize] = deck[i];
-        }
-        result
-    }
 
     fn test_part1(input: &str, shuffled: Vec<i32>) {
         let deck: Vec<i32> = (0..10).collect();
