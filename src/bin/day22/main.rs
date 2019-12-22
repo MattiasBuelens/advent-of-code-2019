@@ -74,14 +74,14 @@ impl Shuffle {
     }
 }
 
-fn shuffle_deck(deck: Vec<i32>, shuffles: &[Shuffle]) -> Vec<i32> {
+fn shuffle_deck(shuffles: &[Shuffle], deck: Vec<i32>) -> Vec<i32> {
     shuffles
         .iter()
         .fold(deck, |deck, shuffle| shuffle.shuffle(deck))
 }
 
 fn part1(input: &Vec<Shuffle>) -> usize {
-    let deck: Vec<i32> = shuffle_deck((0..10_007).collect(), input);
+    let deck: Vec<i32> = shuffle_deck(input, (0..10_007).collect());
     deck.iter().position(|&x| x == 2019).unwrap()
 }
 
@@ -96,7 +96,7 @@ mod tests {
     #[test]
     fn test_part1_example1() {
         assert_eq!(
-            shuffle_deck((0..10).collect(), &parse_input(include_str!("example1"))),
+            shuffle_deck(&parse_input(include_str!("example1")), (0..10).collect()),
             vec![0, 3, 6, 9, 2, 5, 8, 1, 4, 7]
         )
     }
