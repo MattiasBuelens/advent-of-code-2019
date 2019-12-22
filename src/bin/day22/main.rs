@@ -72,12 +72,46 @@ impl Shuffle {
             }
         }
     }
+
+    fn unshuffle(&self, deck_length: usize, position: usize) -> usize {
+        match self {
+            &Shuffle::Stack => (deck_length - 1) - position,
+            &Shuffle::Cut(n) => {
+                let cut_position = if n >= 0 {
+                    deck_length - (n as usize)
+                } else {
+                    -n as usize
+                };
+                if position < cut_position {
+                    position + (deck_length - cut_position)
+                } else {
+                    position - cut_position
+                }
+            }
+            &Shuffle::Inc(n) => {
+                let mut j: usize = 0;
+                for i in 0..deck_length {
+                    if position == j {
+                        return i;
+                    }
+                    j = (j + n) % deck_length;
+                }
+                panic!("failed to unshuffle with increment {}", n);
+            }
+        }
+    }
 }
 
 fn shuffle_deck(shuffles: &[Shuffle], deck: Vec<i32>) -> Vec<i32> {
     shuffles
         .iter()
         .fold(deck, |deck, shuffle| shuffle.shuffle(deck))
+}
+
+fn unshuffle_pos(shuffles: &[Shuffle], deck_length: usize, position: usize) -> usize {
+    shuffles.iter().rev().fold(position, |position, shuffle| {
+        shuffle.unshuffle(deck_length, position)
+    })
 }
 
 fn part1(input: &Vec<Shuffle>) -> usize {
@@ -123,5 +157,42 @@ mod tests {
             shuffle_deck(&parse_input(include_str!("example4")), (0..10).collect()),
             vec![9, 2, 5, 8, 1, 4, 7, 0, 3, 6]
         )
+    }
+
+    fn test_part2(input: &str) {
+        let shuffles = parse_input(input);
+        let deck: Vec<i32> = (0..10).collect();
+        let shuffled = shuffle_deck(&shuffles, deck.clone());
+        let unshuffled = (0..deck.len())
+            .map(|i| unshuffle_pos(&shuffles, deck.len(), i) as i32)
+            .collect::<Vec<_>>();
+        assert_eq!(unshuffled, shuffled);
+    }
+
+    #[test]
+    fn test_part2_example1() {
+        test_part2(include_str!("example1"));
+    }
+
+    #[test]
+    fn test_part2_example2() {
+        test_part2(include_str!("example2"));
+    }
+
+    #[test]
+    fn test_part2_example3() {
+        test_part2(include_str!("example3"));
+    }
+
+    #[test]
+    fn test_part2_example4() {
+        test_part2(include_str!("example4"));
+    }
+
+    #[test]
+    fn test_part2_with_part1() {
+        let shuffles: Vec<Shuffle> = parse_input(include_str!("input"));
+        let pos_of_2019 = part1(&shuffles);
+        assert_eq!(unshuffle_pos(&shuffles, 10_007, pos_of_2019), 2019);
     }
 }
