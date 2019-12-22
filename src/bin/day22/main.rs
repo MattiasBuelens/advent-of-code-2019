@@ -185,6 +185,12 @@ fn shuffle_deck_slow(shuffles: &[Shuffle], deck: Vec<i32>) -> Vec<i32> {
         .fold(deck, |deck, shuffle| shuffle.shuffle_slow(deck))
 }
 
+fn shuffle_pos(shuffles: &[Shuffle], deck_length: usize, position: usize) -> usize {
+    shuffles.iter().fold(position, |position, shuffle| {
+        shuffle.shuffle_pos(deck_length, position)
+    })
+}
+
 fn unshuffle_deck(shuffles: &[Shuffle], deck: Vec<i32>) -> Vec<i32> {
     shuffles
         .iter()
@@ -206,8 +212,7 @@ fn unshuffle_pos(shuffles: &[Shuffle], deck_length: usize, position: usize) -> u
 }
 
 fn part1(input: &Vec<Shuffle>) -> usize {
-    let deck: Vec<i32> = shuffle_deck(input, (0..10_007).collect());
-    deck.iter().position(|&x| x == 2019).unwrap()
+    shuffle_pos(input, 10_007, 2019)
 }
 
 fn part2(input: &Vec<Shuffle>) -> u32 {
@@ -278,9 +283,28 @@ mod tests {
     }
 
     #[test]
-    fn test_part2_with_part1() {
+    fn test_shuffle_pos() {
         let shuffles: Vec<Shuffle> = parse_input(include_str!("input"));
-        let pos_of_2019 = part1(&shuffles);
-        assert_eq!(unshuffle_pos(&shuffles, 10_007, pos_of_2019), 2019);
+        let deck_length = 10_007;
+        let deck: Vec<i32> = (0..deck_length).collect();
+        let shuffled: Vec<i32> = shuffle_deck(&shuffles, deck.clone());
+        assert_eq!(
+            shuffle_pos(&shuffles, deck_length as usize, 2019),
+            shuffled.iter().position(|&x| x == 2019).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_unshuffle_pos() {
+        let shuffles: Vec<Shuffle> = parse_input(include_str!("input"));
+        let deck_length: usize = 10_007;
+        assert_eq!(
+            unshuffle_pos(
+                &shuffles,
+                deck_length,
+                shuffle_pos(&shuffles, deck_length, 2019)
+            ),
+            2019
+        );
     }
 }
