@@ -219,11 +219,6 @@ mod tests {
         test_part1(include_str!("example4"), vec![9, 2, 5, 8, 1, 4, 7, 0, 3, 6]);
     }
 
-    fn do_test_as_mul_add(shuffle: Shuffle, shuffled: Vec<i32>) {
-        let deck: Vec<i32> = (0..(shuffled.len() as i32)).collect();
-        assert_eq!(shuffle_with_mul_add(&[shuffle], deck), shuffled);
-    }
-
     #[test]
     fn test_as_mul_add() {
         assert_eq!(Shuffle::Stack.as_mul_add(5), MulAdd(4, 4));
@@ -231,12 +226,31 @@ mod tests {
         assert_eq!(Shuffle::Cut(-2).as_mul_add(5), MulAdd(1, 2));
         assert_eq!(Shuffle::Inc(2).as_mul_add(5), MulAdd(2, 0));
 
-        do_test_as_mul_add(Shuffle::Stack, vec![4, 3, 2, 1, 0]);
-        do_test_as_mul_add(Shuffle::Cut(2), vec![2, 3, 4, 0, 1]);
-        do_test_as_mul_add(Shuffle::Cut(-2), vec![3, 4, 0, 1, 2]);
-        do_test_as_mul_add(Shuffle::Inc(1), vec![0, 1, 2, 3, 4]);
-        do_test_as_mul_add(Shuffle::Inc(2), vec![0, 3, 1, 4, 2]);
-        do_test_as_mul_add(Shuffle::Inc(3), vec![0, 2, 4, 1, 3]);
+        let deck: Vec<i32> = (0..5).collect();
+        assert_eq!(
+            shuffle_with_mul_add(&[Shuffle::Stack], deck.clone()),
+            vec![4, 3, 2, 1, 0]
+        );
+        assert_eq!(
+            shuffle_with_mul_add(&[Shuffle::Cut(2)], deck.clone()),
+            vec![2, 3, 4, 0, 1]
+        );
+        assert_eq!(
+            shuffle_with_mul_add(&[Shuffle::Cut(-2)], deck.clone()),
+            vec![3, 4, 0, 1, 2]
+        );
+        assert_eq!(
+            shuffle_with_mul_add(&[Shuffle::Inc(1)], deck.clone()),
+            vec![0, 1, 2, 3, 4]
+        );
+        assert_eq!(
+            shuffle_with_mul_add(&[Shuffle::Inc(2)], deck.clone()),
+            vec![0, 3, 1, 4, 2]
+        );
+        assert_eq!(
+            shuffle_with_mul_add(&[Shuffle::Inc(3)], deck.clone()),
+            vec![0, 2, 4, 1, 3]
+        );
     }
 
     #[test]
