@@ -96,7 +96,9 @@ impl Shuffle {
                     position - cut_position
                 }
             }
-            &Shuffle::Inc(n) => (n * position) % deck_length,
+            &Shuffle::Inc(n) => {
+                (((n as u128) * (position as u128)) % (deck_length as u128)) as usize
+            }
         }
     }
 
