@@ -51,13 +51,13 @@ impl Shuffle {
                 deck.reverse();
                 deck
             }
-            &Shuffle::Cut(n) if n > 0 => {
-                let mut bottom = deck.split_off(n as usize);
-                bottom.extend(deck);
-                bottom
-            }
-            &Shuffle::Cut(n) if n < 0 => {
-                let mut bottom = deck.split_off(deck.len() - (-n as usize));
+            &Shuffle::Cut(n) => {
+                let cut_position = if n >= 0 {
+                    n as usize
+                } else {
+                    deck.len() - (-n as usize)
+                };
+                let mut bottom = deck.split_off(cut_position);
                 bottom.extend(deck);
                 bottom
             }
@@ -70,7 +70,6 @@ impl Shuffle {
                 }
                 new_deck
             }
-            _ => panic!("invalid shuffle: {:?}", self),
         }
     }
 }
