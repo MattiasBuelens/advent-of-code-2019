@@ -127,36 +127,30 @@ fn part2(input: &Vec<Shuffle>) -> u32 {
 mod tests {
     use super::*;
 
+    fn test_part1(input: &str, shuffled: Vec<i32>) {
+        let shuffles = parse_input(input);
+        let deck: Vec<i32> = (0..10).collect();
+        assert_eq!(shuffle_deck(&shuffles, deck.clone()), shuffled);
+    }
+
     #[test]
     fn test_part1_example1() {
-        assert_eq!(
-            shuffle_deck(&parse_input(include_str!("example1")), (0..10).collect()),
-            vec![0, 3, 6, 9, 2, 5, 8, 1, 4, 7]
-        )
+        test_part1(include_str!("example1"), vec![0, 3, 6, 9, 2, 5, 8, 1, 4, 7]);
     }
 
     #[test]
     fn test_part1_example2() {
-        assert_eq!(
-            shuffle_deck(&parse_input(include_str!("example2")), (0..10).collect()),
-            vec![3, 0, 7, 4, 1, 8, 5, 2, 9, 6]
-        )
+        test_part1(include_str!("example2"), vec![3, 0, 7, 4, 1, 8, 5, 2, 9, 6]);
     }
 
     #[test]
     fn test_part1_example3() {
-        assert_eq!(
-            shuffle_deck(&parse_input(include_str!("example3")), (0..10).collect()),
-            vec![6, 3, 0, 7, 4, 1, 8, 5, 2, 9]
-        )
+        test_part1(include_str!("example3"), vec![6, 3, 0, 7, 4, 1, 8, 5, 2, 9]);
     }
 
     #[test]
     fn test_part1_example4() {
-        assert_eq!(
-            shuffle_deck(&parse_input(include_str!("example4")), (0..10).collect()),
-            vec![9, 2, 5, 8, 1, 4, 7, 0, 3, 6]
-        )
+        test_part1(include_str!("example4"), vec![9, 2, 5, 8, 1, 4, 7, 0, 3, 6]);
     }
 
     fn test_part2(input: &str) {
