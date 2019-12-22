@@ -85,16 +85,7 @@ impl Shuffle {
         match self {
             &Shuffle::Stack => (deck_length - 1) - position,
             &Shuffle::Cut(n) => {
-                let cut_position = if n >= 0 {
-                    n as usize
-                } else {
-                    deck_length - (-n as usize)
-                };
-                if position < cut_position {
-                    position + (deck_length - cut_position)
-                } else {
-                    position - cut_position
-                }
+                ((position as isize) + (deck_length as isize) - n) as usize % deck_length
             }
             &Shuffle::Inc(n) => {
                 (((n as u128) * (position as u128)) % (deck_length as u128)) as usize
