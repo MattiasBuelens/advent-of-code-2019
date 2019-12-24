@@ -81,15 +81,15 @@ impl Grid {
     }
 
     fn step(&mut self) {
-        let old_grid = self.clone();
+        let mut new_tiles: [[Tile; SIZE]; SIZE] = Default::default();
         for y in 0..SIZE {
             for x in 0..SIZE {
-                let neighbour_bugs = old_grid
+                let neighbour_bugs = self
                     .get_neighbours(x, y)
                     .iter()
                     .filter(|&x| x == &Tile::BUG)
                     .count();
-                self.tiles[y][x] = match (old_grid.tiles[y][x], neighbour_bugs) {
+                new_tiles[y][x] = match (self.tiles[y][x], neighbour_bugs) {
                     // A bug dies (becoming an empty space) unless there is exactly one bug
                     // adjacent to it.
                     (Tile::BUG, 1) => Tile::BUG,
@@ -101,6 +101,7 @@ impl Grid {
                 }
             }
         }
+        self.tiles = new_tiles;
     }
 
     fn get_biodiversity_rating(&self) -> u32 {
