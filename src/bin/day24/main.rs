@@ -299,3 +299,14 @@ fn part2(grid: Grid) -> usize {
     // multi_grid.print();
     multi_grid.count_bugs()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_part1() {
+        let grid = Grid::parse(include_str!("example"));
+        assert_eq!(part1(grid), 2129920);
+    }
+}
