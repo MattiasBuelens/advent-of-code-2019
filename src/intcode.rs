@@ -192,8 +192,7 @@ pub trait Machine {
             match self.step() {
                 StepResult::Ok => {}
                 StepResult::Output(value) => output.push(value as u8 as char),
-                StepResult::NeedInput => break,
-                StepResult::Halt => panic!("unexpected halt"),
+                StepResult::NeedInput | StepResult::Halt => break,
             }
         }
         output
