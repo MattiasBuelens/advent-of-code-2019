@@ -10,7 +10,7 @@ use lazy_static::lazy_static;
 
 fn main() {
     let program: Vec<i64> = parse_list(include_str!("input"), ',');
-    println!("Answer to part 1: {}", part1(&program));
+    play(&program);
 }
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]
@@ -264,7 +264,7 @@ fn drop_all_items(machine: &mut ProgramMachine) {
     }
 }
 
-fn part1(program: &Vec<i64>) -> i32 {
+fn play(program: &Vec<i64>) {
     let mut machine = ProgramMachine::new(program.clone(), vec![]);
     let mut grid: Grid = HashMap::new();
     let mut pos = Vector2D::zero();
