@@ -119,15 +119,21 @@ fn parse_location(s: &str) -> Option<String> {
     }
 }
 
+fn parse_dashed_list(s: &str) -> Vec<String> {
+    s.split('\n')
+        .map(|line| line[2..].into())
+        .collect::<Vec<String>>()
+}
+
 fn parse_doors(s: &str) -> Option<Vec<Direction>> {
     lazy_static! {
         static ref DOORS_RE: Regex = Regex::new(r"Doors here lead:((?:\n\- \w+)+)").unwrap();
     }
     if let Some(captures) = DOORS_RE.captures(s) {
         let list = captures.get(1).unwrap().as_str().trim();
-        let doors = list
-            .split('\n')
-            .map(|line| Direction::try_parse(&line[2..]).unwrap())
+        let doors = parse_dashed_list(list)
+            .iter()
+            .map(|item| Direction::try_parse(item).unwrap())
             .collect::<Vec<_>>();
         Some(doors)
     } else {
@@ -141,14 +147,20 @@ fn parse_items(s: &str) -> Option<Vec<String>> {
     }
     if let Some(captures) = ITEMS_RE.captures(s) {
         let list = captures.get(1).unwrap().as_str().trim();
-        let items = list
-            .split('\n')
-            .map(|line| line[2..].into())
-            .collect::<Vec<String>>();
-        Some(items)
+        Some(parse_dashed_list(list))
     } else {
         None
     }
+}
+
+fn parse_inventory(s: &str) -> Vec<String> {
+    lazy_static! {
+        static ref ITEMS_RE: Regex =
+            Regex::new(r"Items in your inventory:((?:\n\- [^\n]+)+)").unwrap();
+    }
+    let captures = ITEMS_RE.captures(s).unwrap();
+    let list = captures.get(1).unwrap().as_str().trim();
+    parse_dashed_list(list)
 }
 
 fn update_grid(output: &str, grid: &mut Grid, pos: Vector2D) {
@@ -235,12 +247,33 @@ fn go_to_checkpoint(
     false
 }
 
+fn drop_all_items(machine: &mut ProgramMachine) {
+    let command = "inv";
+    println!("{}", &command);
+    machine.add_line(&command);
+
+    let output = machine.read_string();
+    print!("{}", output);
+
+    let items = parse_inventory(&output);
+    for item in items {
+        let command = format!("drop {}", item);
+        println!("{}", &command);
+        machine.add_line(&command);
+        print!("{}", machine.read_string());
+    }
+}
+
 fn part1(program: &Vec<i64>) -> i32 {
     let mut machine = ProgramMachine::new(program.clone(), vec![]);
     let mut grid: Grid = HashMap::new();
     let mut pos = Vector2D::zero();
 
-    go_to_checkpoint(&mut machine, &mut grid, &mut pos, Direction::North);
+    let success = go_to_checkpoint(&mut machine, &mut grid, &mut pos, Direction::North);
+    if !success {
+        panic!("failed to reach security checkpoint");
+    }
+    drop_all_items(&mut machine);
 
     let mut prev_pos = pos;
     loop {
