@@ -150,8 +150,8 @@ fn shuffle_with_mul_add(shuffles: &[Shuffle], deck: Vec<i32>) -> Vec<i32> {
     let modulo = deck.len() as u128;
     let mul_add = combine_shuffles(&shuffles, modulo);
     let mut result: Vec<i32> = deck.clone();
-    for i in 0..deck.len() {
-        result[mul_add.evaluate(i as u128, modulo) as usize] = deck[i];
+    for (i, card) in deck.into_iter().enumerate() {
+        result[mul_add.evaluate(i as u128, modulo) as usize] = card;
     }
     result
 }

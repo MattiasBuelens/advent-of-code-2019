@@ -61,8 +61,8 @@ fn fft_phase(input: &Vec<i32>, offset: usize) -> Vec<i32> {
 }
 
 fn fft_phase_left_half(input: &[i32], output: &mut [i32], offset: usize) {
-    for i in 0..output.len() {
-        output[i] = input
+    for (i, out) in output.iter_mut().enumerate() {
+        *out = input
             .iter()
             .zip(WavePattern::new(offset + i + 1).skip(offset))
             .map(|(x, y)| x * y)
@@ -78,9 +78,9 @@ fn fft_phase_right_half(input: &[i32], output: &mut [i32]) {
     // This means the i'th output is the sum of the i'th input and all subsequent elements.
     // We can compute these sums efficiently by starting from the last one, and working backwards.
     let mut sum = 0;
-    for i in (0..input.len()).rev() {
+    for (i, out) in output.iter_mut().enumerate().rev() {
         sum = (sum + input[i]) % 10;
-        output[i] = sum;
+        *out = sum;
     }
 }
 
